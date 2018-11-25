@@ -37,6 +37,7 @@ class WebPull
                                     std::size_t n,
                                     void* user_data)
   {
+    std::cout << "  size : " << n << '\n';
     *static_cast<std::size_t*>(user_data) += size * n;
     return size * n;
   }
@@ -57,12 +58,20 @@ class WebPull
 
 public:
 
+  auto serialize(bsoncxx::builder::basic::sub_document& doc) const
+  {
+    using namespace bsoncxx::builder::basic;
+
+    doc.append(
+        kvp("date", bsoncxx::types::b_date(date)),
+        kvp("duration", duration.count()),
+        kvp("size", size),
+        kvp("code", code));
+    return doc;
+  }
+
   static WebPull pull_site(const std::string_view& url)
   {
-    // TODO: Find a way that works and does not involve printing the url.
-    // This solves stack smashing...
-    std::cout << url << '\n';
-
     CURL *handle = curl_easy_init();
     curl_easy_setopt(handle, CURLOPT_URL, url.data());
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
@@ -71,25 +80,12 @@ public:
     auto date = SysClock::now();
     // When I store both start and stop the clocks gets messed up. It seems to
     // work when I only store start timer.
-    auto duration = measure_time(
-        [handle] {
-          curl_easy_perform(handle);
-        });
-    std::int32_t code;
+    auto duration = measure_time([handle] { curl_easy_perform(handle); });
+    std::int64_t code;
     curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
     curl_easy_cleanup(handle);
 
     return WebPull(date, milliseconds(duration), *size, code);
-  }
-
-  bsoncxx::document::value serialize() const
-  {
-    using namespace bsoncxx::builder::basic;
-    return make_document(
-        kvp("date", bsoncxx::types::b_date(date)),
-        kvp("duration", duration.count()),
-        kvp("size", size),
-        kvp("code", code));
   }
 };
 

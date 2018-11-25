@@ -95,14 +95,19 @@ class Frame
           using namespace bsoncxx::builder::basic;
 
           std::cout << "pulling from '" << descr.key() << "'\n";
+          descr.pull();
+          std::cout << "pulled\n";
 
           collection.update_one(
               make_document(kvp("name", descr.key())),
               make_document(
                   kvp("$push",
                       [&descr](sub_document doc) {
-                        return doc.append(kvp("measurements",
-                                              descr.pull().serialize()));
+                        doc.append(
+                            kvp("measurements",
+                                [&descr](sub_document doc) {
+                                  return descr.pull().serialize(doc);
+                                }));
                       })));
         });
   }
@@ -177,7 +182,11 @@ using namespace reqserver;
 
 int main(int argc, char** argv)
 {
+  curl_global_init(CURL_GLOBAL_ALL);
+
   auto time_loop = TimeLoop(Frame());
   time_loop.run(Seconds(1));
+
+  curl_global_cleanup();
   return 0;
 }
