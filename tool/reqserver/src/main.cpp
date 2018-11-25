@@ -71,13 +71,13 @@ class Frame
 
     PullDescriptor() : interval(0) {}
 
+    PullDescriptor(const PullDescriptor& other)
+        : name(other.name), url(other.url), interval(other.interval) {}
+
     PullDescriptor(const bsoncxx::document::view& doc)
         : PullDescriptor(std::string(doc["name"].get_utf8()),
                          std::string(doc["url"].get_utf8()),
                          Milliseconds(get_number(doc["interval"]))) {}
-
-    PullDescriptor(const PullDescriptor& other)
-        : PullDescriptor(other.name, other.url, other.interval) {}
 
     KeyType key() const
     { return name; }

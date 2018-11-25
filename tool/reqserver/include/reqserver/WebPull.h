@@ -19,6 +19,8 @@
 #include <bsoncxx/builder/basic/kvp.hpp>
 #include <curl/curl.h>
 
+#include <iostream>
+
 namespace reqserver
 {
 
@@ -54,17 +56,25 @@ class WebPull
 
 public:
 
-  static WebPull pull_site(const std::string& url)
+  static WebPull pull_site(const std::string_view& url)
   {
+    using CharT = std::decay_t<decltype(url)>::value_type;
+
+    std::shared_ptr ptr(std::make_unique<CharT[]>(url.size() + 1));
+    url.copy(ptr.get(), url.size());
+
     CURL *handle = curl_easy_init();
-    curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
     auto size = std::make_unique<std::size_t>(0);
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, size.get());
     auto date = SysClock::now();
     // When I store both start and stop the clocks gets messed up. It seems to
     // work when I only store start timer.
-    auto duration = measure_time([handle] { curl_easy_perform(handle); });
+    auto duration = measure_time(
+        [handle, &ptr] {
+          curl_easy_setopt(handle, CURLOPT_URL, ptr.get());
+          curl_easy_perform(handle);
+        });
     curl_easy_perform(handle);
     std::int32_t code;
     curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
