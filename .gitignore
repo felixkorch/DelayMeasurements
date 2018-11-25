@@ -43,7 +43,7 @@ typings/
 
 # Optional npm cache directory
 .npm
-server/auth.json
+auth.json
 
 # Optional eslint cache
 .eslintcache
