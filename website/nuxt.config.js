@@ -33,6 +33,7 @@ module.exports = {
   ** Plugins to load before mounting the App
   */
   plugins: [
+      { src: '~/plugins/amcharts.js', ssr: false }
   ],
 
   /*
@@ -47,11 +48,12 @@ module.exports = {
   ** Build configuration
   */
   build: {
+    vendor: ['amcharts'],
     /*
     ** You can extend webpack config here
     */
     extend(config, ctx) {
-      
+
     }
   }
 }

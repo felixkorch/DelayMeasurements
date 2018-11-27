@@ -35,12 +35,12 @@ class Site {
             }
             res.success = true;
             res.measurements = arr;
-            res.durations = arr.map(x => x["duration"] / 1000);
-            res.times =  res.measurements.map(x => new Date(x["date"]["$date"]));
+            res.durations = arr.map(x => x["duration"]);
+            res.times =  res.measurements.map(x => new Date(x["date"]));
             res.length = res.measurements.length;
 
-            res.max_duration = res.durations.reduce((a, b) => Math.max(a, b), 0);
-            res.min_duration = res.durations.reduce((a, b) => Math.min(a, b), 0);
+            res.max_duration = Math.max.apply(Math, res.durations);
+            res.min_duration = Math.min.apply(Math, res.durations);
             res.average = res.durations.reduce((a, b) => a + b, 0) / res.durations.length;
             res.max_deviation = Math.max(Math.abs(res.max_duration - res.average), (Math.abs(res.min_duration - res.average)));
 

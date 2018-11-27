@@ -6,12 +6,12 @@
                     class="form-control"
                     @focus="inputFocused = true"
                     @blur="inputFocused = false"
-                    v-bind:class="{ 'is-invalid': newSiteError && inputFocused }"
+                    v-bind:class="{ 'is-invalid': (newSiteError && newSiteError && newSite)}"
                     type="text" placeholder="http://example.com/"
                     v-model="newSite">
                 <button
                     class="btn btn-primary"
-                    :disabled="newSiteError && inputFocused"
+                    :disabled="newSiteError"
                     type="submit"
                     @click="addSite"> Add Site </button>
             </div>
@@ -20,8 +20,8 @@
             <!-- <transition-group name="splice" tag="div"> -->
                 <li class="list-group-item site-panel"
                     v-for="item in sites"
-                    @contextmenu.prevent="onRightClick(item.index)"
-                    @click="itemClicked(item); $emit('siteSelected', item.url);"
+                    @contextmenu.prevent="deleteSite(item)"
+                    @click="itemClicked(item)"
                     v-bind:key="item"
                     v-bind:class="{ active: item.isSelected }"
                 > {{ item.url }} </li>
@@ -45,10 +45,11 @@
         },
 
         methods: {
-            onRightClick: function(index) {
-                this.sites.splice(index, 1);
+            deleteSite: function(item) {
+                this.$emit('siteDeleted', item.url);
+                this.sites.splice(item.index, 1);
                 this.sites.forEach(element => {
-                    if(element.index > index)
+                    if(element.index > item.index)
                         element.index--;
                 });
             },
@@ -65,7 +66,7 @@
                     this.sites[this.selectedSiteId].isSelected = false;
                 this.selectedSiteId = item.index;
                 item.isSelected = true;
-                console.log("selected index: " + this.selectedSiteId);
+                this.$emit('siteSelected', item.url);
             },
             validURL: function(str) {
                 var pattern = new RegExp('^(https?:\\/\\/)?'+ // protocol
@@ -87,7 +88,7 @@
                     return [];
             },
             newSiteError: function() {
-                if(this.validURL(this.newSite) || this.newSite === "")
+                if(this.validURL(this.newSite))
                     return false;
                 return true;
             }

@@ -5,18 +5,19 @@
                 <Table :passedData=siteData />
             </div>
             <div class='col-lg-6 col-md-6 col-sm-12 col-xs-12'>
-                <SiteList :passedSites=sitesList v-on:siteSelected="siteClicked" v-on:siteAdded="siteAdded" />
+                <SiteList :passedSites=sitesList v-on:siteSelected="siteClicked" v-on:siteAdded="siteAdded" v-on:siteDeleted="siteDeleted" />
             </div>
         </div>
-        <div class="row">
-            <LineChart :data=test />
+        <div class="row" style="margin-top:50px">
+            <LineChart :data=siteData ref="lineChartRef" :visiblePoints=20 />
         </div>
     </div>
 </template>
 
 <script>
-    import io from 'socket.io-client';
+import io from 'socket.io-client';
 //import VueSocketIO from 'vue-socket.io';
+
 import SiteList from "~/components/SiteList";
 import Table from "~/components/Table";
 import LineChart from "~/components/LineChart";
@@ -36,22 +37,14 @@ export default {
     },
     data() {
         return {
-            selectedSiteName: "",
-            test: {
-                labels: [new Date(100).toDateString(), 'b', 'c', 'd'],
-                datasets: [ {
-                    data: [20, 30, 40, 50],
-                    label: 'Measurements',
-                    backgroundColor: '#f87979'
-                } ]
-            }
+            selectedSiteName: null
         }
     },
     methods: {
 
         siteClicked: function(siteName) {
             this.selectedSiteName = siteName;
-            this.fetchData(false);
+            this.fetchData({ polling: false });
         },
 
         siteAdded: function(siteName) {
@@ -65,15 +58,27 @@ export default {
             });
         },
 
-        fetchData: function(poll) {
+        siteDeleted: function(siteName) {
+            let ref = this;
+            socket.emit('site_deleted', { site: siteName }, function(data) {
+                if(!data.success) {
+                    console.log("not successful");
+                    return;
+                }
+                console.log("successful!");
+            });
+        },
+
+        fetchData: function(options) {
             let ref = this;
             console.log("preparing to fetch data for " + this.selectedSiteName + "..");
-            socket.emit('site_data', { "site_name": this.selectedSiteName, "poll": poll }, function(data) {
+            socket.emit('site_data', { "site_name": this.selectedSiteName, "poll": options.polling }, function(data) {
                 if(!data.success) {
                     console.log("not successful");
                     return;
                 }
                 ref.siteData = data;
+                ref.$refs.lineChartRef.updateChart(data, options.polling);
                 console.log("successful!");
             });
         },
@@ -94,7 +99,8 @@ export default {
             });
 
             setInterval(() => {
-                this.fetchData(true);
+                if(this.selectedSiteName)
+                    this.fetchData({ polling: true });
             }, 3000);
         }
 
