@@ -49,7 +49,7 @@ export default {
 
         siteAdded: function(siteName) {
             let ref = this;
-            socket.emit('site_added', { site: siteName }, function(data) {
+            socket.emit('siteAdded', { site: siteName }, function(data) {
                 if(!data.success) {
                     console.log("not successful");
                     return;
@@ -60,7 +60,7 @@ export default {
 
         siteDeleted: function(siteName) {
             let ref = this;
-            socket.emit('site_deleted', { site: siteName }, function(data) {
+            socket.emit('siteDeleted', { site: siteName }, function(data) {
                 if(!data.success) {
                     console.log("not successful");
                     return;
@@ -72,7 +72,7 @@ export default {
         fetchData: function(options) {
             let ref = this;
             console.log("preparing to fetch data for " + this.selectedSiteName + "..");
-            socket.emit('site_data', { "site_name": this.selectedSiteName, "poll": options.polling }, function(data) {
+            socket.emit('siteData', { "siteName": this.selectedSiteName, "poll": options.polling }, function(data) {
                 if(!data.success) {
                     console.log("not successful");
                     return;
@@ -87,7 +87,7 @@ export default {
             socket = io();
             let ref = this;
 
-            socket.emit('site_list', function(data) {
+            socket.emit('siteList', function(data) {
                 if(!data.success) {
                     console.log("not successful");
                     return;

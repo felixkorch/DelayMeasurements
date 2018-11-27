@@ -12,139 +12,161 @@ const fs = require("fs");
 const path = require("path");
 const bodyParser = require("body-parser");
 const io = require('socket.io');
-const MongoClient = require('mongodb').MongoClient;
-const MongoHelper = require('./helper.js');
 const MongoAuth = require('./auth.json');
 
-const http_server = http.Server(app);
-const socket = io.listen(http_server);
+const mongoose = require('mongoose');
+const db = mongoose.connection;
 
-var db;
-var mongo_helper = new MongoHelper(db, 'sites');
-var client_count = 0;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  console.log("Successfully connected to the db!");
+});
 
-class Site {
+var Schema = mongoose.Schema;
+var siteSchema = new Schema({
+    name:  String,
+    url: String,
+    interval: Number,
+    measurements: [{ date: Date, duration: Number, size: Number, code: Number }]
+}, { versionKey: false });
 
-    static read_measurements(name, db_helper, callback) {
-        let res = {};
-        let query = { "url": name };
-        db_helper.get_field("measurements", query, function(err, arr) {
-            if(err || arr == null || arr == []) { // Fix empty array case
-                callback(err, { "success": false });
-                return;
-            }
-            res.success = true;
-            res.measurements = arr;
-            res.durations = arr.map(x => x["duration"]);
-            res.times =  res.measurements.map(x => new Date(x["date"]));
-            res.length = res.measurements.length;
-
-            res.max_duration = Math.max.apply(Math, res.durations);
-            res.min_duration = Math.min.apply(Math, res.durations);
-            res.average = res.durations.reduce((a, b) => a + b, 0) / res.durations.length;
-            res.max_deviation = Math.max(Math.abs(res.max_duration - res.average), (Math.abs(res.min_duration - res.average)));
-
-            res.table_data = res.times.map( (t, i) => {
-                return { date: t, value: res.durations[i] }
-            });
-
-            callback(err, res);
+siteSchema.statics.getAllNames = function getAllNames(cb) {
+    let query = this.find();
+    query.select('name');
+    query.exec(function(err, objs) {
+        let res = objs.map((el) => {
+            return el.name;
         });
-    }
-
-    static read_sites(db_helper, callback) {
-        db_helper.get_field_many('name', {}, function(err, res) {
-            if(err || res == null) {
-                callback(err, []);
-                return;
-            }
-
-            callback(err, res);
-        });
-    }
-
+        if(err || res == null) {
+            cb(err, []);
+            return;
+        }
+        cb(err, res);
+    });
 }
 
-function file_to_json(path, filename) {
+siteSchema.statics.getMeasurements = function getMeasurements(url, cb) {
+    let query = { 'url': url };
+
+    Site.findOne(query, 'measurements interval', function (err, site) {
+        let res = {};
+
+        if(err || site == null) {
+            cb(err, res);
+            return;
+        }
+        
+        res.measurements = site.measurements;
+
+        res.durations = [];
+        res.dates = [];
+        res.measurements.forEach(x => {
+            res.durations.push(x.duration);
+            res.dates.push(new Date(x.date));
+        });
+        res.length = res.measurements.length;
+        res.interval = site.interval;
+
+        res.maxDuration = Math.max.apply(Math, res.durations);
+        res.minDuration = Math.min.apply(Math, res.durations);
+        res.average = res.durations.reduce((a, b) => a + b, 0) / res.durations.length;
+        res.maxDeviation = Math.max(Math.abs(res.maxDuration - res.average), (Math.abs(res.minDuration - res.average)));
+
+        res.chartData = res.dates.map( (t, i) => {
+            return { date: new Date(t), value: res.durations[i] }
+        });
+
+        res.success = true;
+        cb(err, res);
+    });
+}
+
+var Site = mongoose.model('Site', siteSchema, 'sites');
+
+const httpServer = http.Server(app);
+const socket = io.listen(httpServer);
+
+var clientCount = 0;
+
+function fileToJson(path, filename) {
 
     if (path.substring(path.length - 1) != "/")
         path += "/";
 
-    let read_sites;
+    let readSites;
 
     try {
-        read_sites = fs.readFileSync(path + filename, "utf8");
+        readSites = fs.readFileSync(path + filename, "utf8");
     }catch(err) {
         console.log("'" + filename + "' doesn't exist");
         return { success: false, json: {} };
     }
-    return { success: true, json: JSON.parse(read_sites) };
+    return { success: true, json: JSON.parse(readSites) };
 }
 
 
-function add_site(name, callback) {
-    if(!validator.isURL(name)) {
-        callback({ success: false });
+function addSite(url, cb) {
+    if(!validator.isURL(url)) {
+        cb({ success: false });
     }
 
     let obj = {
-        "name": name,
-        "url": name,
+        "name": url,
+        "url": url,
         "interval": 35000,
         "measurements": []
     };
 
-    mongo_helper.insert_document(obj, function(err, res) {
+    let newSite = new Site(obj);
+    newSite.save(function (err) {
         if(err) {
-            console.log("Problem with adding site: " + name);
-            callback({ success: false });
+            console.log("Problem with adding site: " + url);
+            cb({ success: false });
         }else {
-            console.log("Successfully added site: " + name);
-            callback({ success: true });
+            console.log("Successfully added site: " + url);
+            cb({ success: true });
         }
     });
 }
 
-function delete_site(name, callback) {
-    let query = {
-        "url": name
-    };
-    mongo_helper.remove_document(query, function(err, res) {
-        if(err) {
-            console.log("Problem with deleting site: " + name);
-            callback({ success: false });
+function deleteSite(url, cb) {
+    let query = { "url": url };
+    Site.deleteOne(query, function (err) {
+        if (err){
+            console.log("Problem with deleting site: " + url);
+            cb({ success: false });
         }else {
-            console.log("Successfully deleted site: " + name);
-            callback({ success: true });
+            console.log("Successfully deleted site: " + url);
+            cb({ success: true });
         }
     });
 }
 
-var sample_sizes = {};
+var sampleSizes = {};
 
 socket.on('connection', function (socket) {
 
-    console.log('user connected');
-    client_count++;
+    console.log('user connected, id: ' + socket.id);
+    clientCount++;
     socket.on('disconnect', function() {
-        client_count--;
+        clientCount--;
         console.log('user disconnected');
     });
 
-    socket.on('site_added', function (req, fn) {
-        add_site(req.site, function(res) {
+    socket.on('siteAdded', function (req, fn) {
+        addSite(req.site, function(res) {
             fn(res);
         });
     });
 
-    socket.on('site_deleted', function (req, fn) {
-        delete_site(req.site, function(res) {
+    socket.on('siteDeleted', function (req, fn) {
+        deleteSite(req.site, function(res) {
             fn(res);
         });
     });
 
-    socket.on('site_list', function (fn) {
-      Site.read_sites(mongo_helper, function(err, res) {
+    socket.on('siteList', function (fn) {
+      Site.getAllNames(function(err, res) {
         if(err)
           fn({ success: false, list: [] });
         else
@@ -152,24 +174,36 @@ socket.on('connection', function (socket) {
       });
     });
 
-    socket.on('site_data', function (data, fn) {
-        Site.read_measurements(data.site_name, mongo_helper, function(err, res) {
+    socket.on('siteData', function (data, fn) {
+        Site.getMeasurements(data.siteName, function(err, res) {
             if(res.success && data.poll) {
-                let size = sample_sizes[data.site_name];
+                let size = sampleSizes[data.siteName];
                 if(size == null) {
                     size = 0;
-                    sample_sizes[data.site_name] = 0;
+                    sampleSizes[data.siteName] = 0;
                 }
                 if (size == res.length)
                     res.success = false;
                 else
-                    sample_sizes[data.site_name] = res.length;
+                    sampleSizes[data.siteName] = res.length;
             }
             fn(res);
         });
     });
 });
 
+app.get('/api/sites/:site', function(req, res, next) {
+    Site.findOne().where('name').equals(req.params.site).select('measurements').exec(function(err, site) {
+        if(err) return next(err);
+        if(site) {
+            res.send(site.measurements.map((el) => {
+                return { date: new Date(el.date), value: el.duration };
+            }));
+        }else {
+            res.send("Nothing here..")
+        }
+    });
+});
 
 app.set('port', port)
 
@@ -178,30 +212,25 @@ let config = require('../nuxt.config.js')
 config.dev = !(process.env.NODE_ENV === 'production')
 
 async function start() {
-  // Init Nuxt.js
-  const nuxt = new Nuxt(config)
+    // Init Nuxt.js
+    const nuxt = new Nuxt(config)
 
-  // Build only in dev mode
-  if (config.dev) {
+    // Build only in dev mode
+    if (config.dev) {
     const builder = new Builder(nuxt)
     await builder.build()
-  }
+    }
 
-  // Give nuxt middleware to express
-  app.use(nuxt.render)
+    // Give nuxt middleware to express
+    app.use(nuxt.render)
 
-  MongoClient.connect('mongodb://' + MongoAuth.user + ':' + MongoAuth.pass + '@' + MongoAuth.db, (err, client) => {
-    if (err) return console.log(err);
-    db = client.db('delay');
-    mongo_helper = new MongoHelper(db, 'sites');
-});
+    mongoose.connect('mongodb://' + MongoAuth.user + ':' + MongoAuth.pass + '@' + MongoAuth.db, { autoIndex: false });
 
-
-  // Listen the server
-  http_server.listen(port)
-  consola.ready({
+    // Listen the server
+    httpServer.listen(port)
+    consola.ready({
     message: `Server listening on http://${host}:${port}`,
     badge: true
-  })
+    })
 }
 start()
