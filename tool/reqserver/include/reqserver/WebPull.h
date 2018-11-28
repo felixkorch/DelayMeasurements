@@ -37,7 +37,6 @@ class WebPull
                                     std::size_t n,
                                     void* user_data)
   {
-    std::cout << "  size : " << n << '\n';
     *static_cast<std::size_t*>(user_data) += size * n;
     return size * n;
   }
@@ -58,7 +57,7 @@ class WebPull
 
 public:
 
-  auto serialize(bsoncxx::builder::basic::sub_document& doc) const
+  void serialize(bsoncxx::builder::basic::sub_document& doc) const
   {
     using namespace bsoncxx::builder::basic;
 
@@ -67,7 +66,6 @@ public:
         kvp("duration", duration.count()),
         kvp("size", size),
         kvp("code", code));
-    return doc;
   }
 
   static WebPull pull_site(const std::string_view& url)
@@ -75,17 +73,17 @@ public:
     CURL *handle = curl_easy_init();
     curl_easy_setopt(handle, CURLOPT_URL, url.data());
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
-    auto size = std::make_unique<std::size_t>(0);
-    curl_easy_setopt(handle, CURLOPT_WRITEDATA, size.get());
+    std::size_t size = 0;
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, &size);
     auto date = SysClock::now();
     // When I store both start and stop the clocks gets messed up. It seems to
     // work when I only store start timer.
     auto duration = measure_time([handle] { curl_easy_perform(handle); });
-    std::int64_t code;
+    std::int64_t code = 0;
     curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
     curl_easy_cleanup(handle);
 
-    return WebPull(date, milliseconds(duration), *size, code);
+    return WebPull(date, milliseconds(duration), size, code);
   }
 };
 

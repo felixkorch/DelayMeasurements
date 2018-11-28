@@ -12,8 +12,6 @@
 #include "reqserver/Time.h"
 #include <chrono>
 #include <memory>
-#include <vector>
-#include <algorithm>
 
 namespace reqserver
 {
@@ -26,39 +24,64 @@ class CycleCallerBase
   template <class Clock, class Duration>
   using time_point = std::chrono::time_point<Clock, Duration>;
 
-  int cycle_duration;
-  int cycle_progress;
+  int interval_dur;
+  int progress;
 
   virtual void trigger() {}
 
-  bool incr_timer(int ms)
+  bool advance(int ms)
   {
-    cycle_progress += ms;
-    if(cycle_progress < cycle_duration)
+    progress += ms;
+    if(progress < interval_dur)
       return false;
-    cycle_progress %= cycle_duration;
-    trigger();
+    progress %= interval_dur;
     return true;
   }
 
 public:
 
-  CycleCallerBase(const Milliseconds& interval)
-      : cycle_duration(interval.count()), cycle_progress(0) {}
+  CycleCallerBase(const Milliseconds& interval,
+                  const Milliseconds& progress = Milliseconds(0))
+      : interval_dur(interval.count()),
+        progress(progress.count() % interval.count()) {}
 
-  template <class Rep, class Period>
-  CycleCallerBase(const duration<Rep, Period>& interval)
-      : CycleCallerBase(milliseconds(interval)) {}
+  template <class Rep1, class Period1, class Rep2, class Period2>
+  CycleCallerBase(const duration<Rep1, Period1>& interval,
+                  const duration<Rep2, Period2>& progress =
+                  duration<Rep2, Period2>::zero())
+      : CycleCallerBase(milliseconds(interval), milliseconds(progress)) {}
 
+  /// --------------------------------------------------------------------------
+  /// \func: void forward
+  ///   @dur: Duration to increase the timer.
+  ///
+  /// Increases the timer by duration without triggering the cycle even if it
+  /// passes the interval. Returns true if the interval was passed.
   template <class Rep, class Period>
-  auto incr_timer(const duration<Rep, Period>& dur)
-  { return incr_timer(milliseconds(dur).count()); }
+  bool forward(const duration<Rep, Period>& dur)
+  { return advance(milliseconds(dur).count()); }
+
+  /// --------------------------------------------------------------------------
+  /// \func: void increment
+  ///   @dur: Duration to increase the timer.
+  ///
+  /// Increases the timer by duration and triggers the call if it passes the
+  /// interval. Returns true if the interval was passed.
+  template <class Rep, class Period>
+  bool increment(const duration<Rep, Period>& dur)
+  {
+    if(advance(milliseconds(dur).count())) {
+      trigger();
+      return true;
+    }
+    return false;
+  }
 
   auto interval() const
-  { return Milliseconds(cycle_duration); }
+  { return Milliseconds(interval_dur); }
 
   void set_interval(const Milliseconds& new_value )
-  { cycle_duration = new_value.count(); }
+  { interval_dur = new_value.count(); }
 
 };
 

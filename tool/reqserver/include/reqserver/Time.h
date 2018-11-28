@@ -9,7 +9,9 @@
 #ifndef REQSERVER_TIME_H
 #define REQSERVER_TIME_H
 
+#include <ctime>
 #include <chrono>
+#include <iostream>
 
 namespace reqserver
 {
@@ -24,6 +26,15 @@ template <class Rep, class Period>
 constexpr auto milliseconds(const std::chrono::duration<Rep, Period>& dur)
 { return std::chrono::duration_cast<Milliseconds>(dur); }
 
+template <class CharT>
+std::basic_ostream<CharT>& operator<<(std::basic_ostream<CharT>& stream,
+                                      const SysClock::time_point& time)
+{
+  auto t = SysClock::to_time_t(time);
+  char str[32];
+  std::strftime(str, sizeof(str), "%F %T %z", std::localtime(&t));
+  return stream << str;
+}
 
 } // namespace reqserver
 
