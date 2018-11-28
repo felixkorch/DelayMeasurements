@@ -7,7 +7,6 @@
     export default {
         name: 'line-chart',
         props: {
-            data: Object,
             visiblePoints: Number
         },
         data() {
@@ -16,27 +15,17 @@
             }
         },
         methods: {
-            updateChart: function(newData, poll) {
-                let nPoints = newData.length;
-                if(!poll) {
-                    let data = [];
-                    if(nPoints >= this.visiblePoints) {
-                        for (let i = nPoints - this.visiblePoints; i < nPoints; i++) {
-                            data.push({ date: new Date(newData.dates[i]), value: newData.durations[i] });
-                        }
-                    }else{
-                        for (let i = 0; i < nPoints; i++) {
-                            data.push({ date: new Date(newData.dates[i]), value: newData.durations[i] });
-                        }
-                    }
-                    this.chart.data = data;
+            updateChart: function(chartData, poll) {
+                if(poll) {
+                    let lastElement = chartData.length - 1;
+                    this.chart.addData({ date: new Date(chartData[lastElement].date), value: chartData[lastElement].value });
                 }else {
-                    if(nPoints > this.visiblePoints)
-                        this.chart.addData({ date: new Date(newData.dates[nPoints - 1]), value: newData.durations[nPoints - 1] }, 1);
-                    else
-                        this.chart.addData({ date: new Date(newData.dates[nPoints - 1]), value: newData.durations[nPoints - 1] });
+                    chartData.forEach(x => {
+                        x.date = new Date(x.date);
+                    });
+                    this.chart.data = chartData;
                 }
-                //this.chart.xAxes.zoom({start:0, end:1}); Needed?
+                //this.chart.xAxes.zoom({start:0, end:1});
             }
         },
         ready() {
@@ -58,16 +47,16 @@
             series.tooltipText = "{valueY.value}";
             series.strokeWidth = 3;
 
-            //chart.cursor = new am4charts.XYCursor();
-            //chart.cursor.xAxis = dateAxis;
-            //chart.cursor.fullWidthLineX = true;
-            //chart.cursor.lineX.strokeWidth = 0;
-            //chart.cursor.lineX.fill = chart.colors.getIndex(2);
-            //chart.cursor.lineX.fillOpacity = 0.1;
+            chart.cursor = new am4charts.XYCursor();
+            chart.cursor.xAxis = dateAxis;
+            chart.cursor.fullWidthLineX = true;
+            chart.cursor.lineX.strokeWidth = 0;
+            chart.cursor.lineX.fill = chart.colors.getIndex(2);
+            chart.cursor.lineX.fillOpacity = 0.1;
 
             dateAxis.baseInterval = {
 		        "timeUnit": "second",
-		        "count": 10
+		        "count": 5
             }
 
             //chart.events.on("ready", function () {

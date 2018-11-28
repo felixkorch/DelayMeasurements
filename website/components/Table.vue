@@ -11,6 +11,8 @@
             <dd> {{ measurements.maxDeviation }} ms </dd>
             <dt>Interval</dt>
             <dd> {{ measurements.interval / 1000 }} s </dd>
+            <dt>Data points</dt>
+            <dd> {{ measurements.length }} </dd>
         </dl>
     </div>
 </template>

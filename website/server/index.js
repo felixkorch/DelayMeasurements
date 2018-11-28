@@ -31,54 +31,62 @@ var siteSchema = new Schema({
 }, { versionKey: false });
 
 siteSchema.statics.getAllNames = function getAllNames(cb) {
-    let query = this.find();
-    query.select('name');
-    query.exec(function(err, objs) {
-        let res = objs.map((el) => {
-            return el.name;
+    this.find()
+        .select('name')
+        .lean()
+        .exec(function(err, objs) {
+            let res = objs.map((el) => {
+                return el.name;
+            });
+            if(err || res == null) {
+                cb(err, []);
+                return;
+            }
+            cb(err, res);
         });
-        if(err || res == null) {
-            cb(err, []);
-            return;
-        }
-        cb(err, res);
-    });
 }
 
-siteSchema.statics.getMeasurements = function getMeasurements(url, cb) {
-    let query = { 'url': url };
+siteSchema.statics.getCalculations = function getCalculations(url, cb) {
 
-    Site.findOne(query, 'measurements interval', function (err, site) {
-        let res = {};
+    Site.findOne()
+        .where('url').equals(url)
+        .select('measurements interval')
+        .lean()
+        .exec(function(err, site) {
+            let res = {};
 
-        if(err || site == null) {
+            if(err || site == null) {
+                cb(err, res);
+                return;
+            }
+            
+            res.measurements = site.measurements;
+
+            res.durations = [];
+            res.dates = [];
+            res.measurements.forEach(x => {
+                res.durations.push(x.duration);
+                res.dates.push(new Date(x.date));
+            });
+            res.length = res.measurements.length;
+            res.interval = site.interval;
+
+            res.maxDuration = Math.max.apply(Math, res.durations);
+            res.minDuration = Math.min.apply(Math, res.durations);
+            res.average = res.durations.reduce((a, b) => a + b, 0) / res.durations.length;
+            res.maxDeviation = Math.max(Math.abs(res.maxDuration - res.average), (Math.abs(res.minDuration - res.average)));
+
+            let begin = 0;
+            if(res.length >= 20)
+                begin = res.length - 20;
+
+            res.chartData = res.measurements.slice(begin, res.length).map( el => {
+                return { date: new Date(el.date), value: el.duration };
+            });
+
+            res.success = true;
             cb(err, res);
-            return;
-        }
-        
-        res.measurements = site.measurements;
-
-        res.durations = [];
-        res.dates = [];
-        res.measurements.forEach(x => {
-            res.durations.push(x.duration);
-            res.dates.push(new Date(x.date));
         });
-        res.length = res.measurements.length;
-        res.interval = site.interval;
-
-        res.maxDuration = Math.max.apply(Math, res.durations);
-        res.minDuration = Math.min.apply(Math, res.durations);
-        res.average = res.durations.reduce((a, b) => a + b, 0) / res.durations.length;
-        res.maxDeviation = Math.max(Math.abs(res.maxDuration - res.average), (Math.abs(res.minDuration - res.average)));
-
-        res.chartData = res.dates.map( (t, i) => {
-            return { date: new Date(t), value: res.durations[i] }
-        });
-
-        res.success = true;
-        cb(err, res);
-    });
 }
 
 var Site = mongoose.model('Site', siteSchema, 'sites');
@@ -110,14 +118,14 @@ function addSite(url, cb) {
         cb({ success: false });
     }
 
-    let obj = {
+    let skeleton = {
         "name": url,
         "url": url,
         "interval": 35000,
         "measurements": []
     };
 
-    let newSite = new Site(obj);
+    let newSite = new Site(skeleton);
     newSite.save(function (err) {
         if(err) {
             console.log("Problem with adding site: " + url);
@@ -130,16 +138,17 @@ function addSite(url, cb) {
 }
 
 function deleteSite(url, cb) {
-    let query = { "url": url };
-    Site.deleteOne(query, function (err) {
-        if (err){
-            console.log("Problem with deleting site: " + url);
-            cb({ success: false });
-        }else {
-            console.log("Successfully deleted site: " + url);
-            cb({ success: true });
-        }
-    });
+    Site.deleteOne()
+        .where('url').equals(url)
+        .exec(function(err) {
+            if (err){
+                console.log("Problem with deleting site: " + url);
+                cb({ success: false });
+            }else {
+                console.log("Successfully deleted site: " + url);
+                cb({ success: true });
+            }
+        });
 }
 
 var sampleSizes = {};
@@ -175,12 +184,13 @@ socket.on('connection', function (socket) {
     });
 
     socket.on('siteData', function (data, fn) {
-        Site.getMeasurements(data.siteName, function(err, res) {
-            if(res.success && data.poll) {
+        Site.getCalculations(data.siteName, function(err, res) {
+            if(res.success && data.options.polling) {
                 let size = sampleSizes[data.siteName];
                 if(size == null) {
                     size = 0;
                     sampleSizes[data.siteName] = 0;
+                    res.success = false;
                 }
                 if (size == res.length)
                     res.success = false;
@@ -193,15 +203,19 @@ socket.on('connection', function (socket) {
 });
 
 app.get('/api/sites/:site', function(req, res, next) {
-    Site.findOne().where('name').equals(req.params.site).select('measurements').exec(function(err, site) {
-        if(err) return next(err);
-        if(site) {
-            res.send(site.measurements.map((el) => {
-                return { date: new Date(el.date), value: el.duration };
-            }));
-        }else {
-            res.send("Nothing here..")
-        }
+    Site.findOne()
+        .where('name').equals(req.params.site)
+        .select('measurements')
+        .lean()
+        .exec(function(err, site) {
+            if(err) return next(err);
+            if(site) {
+                res.send(site.measurements.map((el) => {
+                    return { date: new Date(el.date), value: el.duration };
+                }));
+            }else {
+                res.send("Nothing here..")
+            }
     });
 });
 

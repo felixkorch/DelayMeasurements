@@ -2,14 +2,14 @@
     <div class='container' id="main_container">
         <div class='row'>
             <div class='col-lg-6 col-md-6 col-sm-12 col-xs-12'>
-                <Table :passedData=siteData />
+                <Table :passedData=tableData />
             </div>
             <div class='col-lg-6 col-md-6 col-sm-12 col-xs-12'>
                 <SiteList :passedSites=sitesList v-on:siteSelected="siteClicked" v-on:siteAdded="siteAdded" v-on:siteDeleted="siteDeleted" />
             </div>
         </div>
         <div class="row" style="margin-top:50px">
-            <LineChart :data=siteData ref="lineChartRef" :visiblePoints=20 />
+            <LineChart ref="lineChartRef" :visiblePoints=20 />
         </div>
     </div>
 </template>
@@ -33,7 +33,7 @@ export default {
     },
     props: {
         sitesList: Array,
-        siteData: Object
+        tableData: Object
     },
     data() {
         return {
@@ -72,13 +72,13 @@ export default {
         fetchData: function(options) {
             let ref = this;
             console.log("preparing to fetch data for " + this.selectedSiteName + "..");
-            socket.emit('siteData', { "siteName": this.selectedSiteName, "poll": options.polling }, function(data) {
+            socket.emit('siteData', { "siteName": this.selectedSiteName, "options": options }, function(data) {
                 if(!data.success) {
                     console.log("not successful");
                     return;
                 }
-                ref.siteData = data;
-                ref.$refs.lineChartRef.updateChart(data, options.polling);
+                ref.tableData = data;
+                ref.$refs.lineChartRef.updateChart(data.chartData, options.polling);
                 console.log("successful!");
             });
         },
