@@ -1,0 +1,13 @@
+
+# cmake
+build
+
+# emacs
+*~
+
+# Visual Studio Code
+.vscode/
+
+# reqserver
+reqserver.json
+
