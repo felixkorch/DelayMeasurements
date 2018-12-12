@@ -4,15 +4,15 @@
             <dt>Average</dt>
             <dd> {{ measurements.average }} ms </dd>
             <dt>Max. response time</dt>
-            <dd> {{ measurements.maxDuration }} ms </dd>
+            <dd> {{ measurements.max }} ms </dd>
             <dt>Min. response time</dt>
-            <dd> {{ measurements.minDuration }} ms </dd>
+            <dd> {{ measurements.min }} ms </dd>
             <dt>Max. deviation</dt>
             <dd> {{ measurements.maxDeviation }} ms </dd>
             <dt>Interval</dt>
             <dd> {{ measurements.interval / 1000 }} s </dd>
             <dt>Data points</dt>
-            <dd> {{ measurements.length }} </dd>
+            <dd> {{ measurements.dataPoints }} </dd>
         </dl>
     </div>
 </template>

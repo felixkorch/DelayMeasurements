@@ -9,7 +9,7 @@
             </div>
         </div>
         <div class="row" style="margin-top:50px">
-            <LineChart ref="lineChartRef" :visiblePoints=20 />
+            <LineChart ref="lineChartRef" :visiblePoints=20 :chartData=chartData2 />
         </div>
     </div>
 </template>
@@ -33,7 +33,8 @@ export default {
     },
     props: {
         sitesList: Array,
-        tableData: Object
+        tableData: Object,
+        chartData2: Array
     },
     data() {
         return {
@@ -78,6 +79,7 @@ export default {
                     return;
                 }
                 ref.tableData = data;
+                ref.chartData2 = data.chartData;
                 ref.$refs.lineChartRef.updateChart(data.chartData, options.polling);
                 console.log("successful!");
             });

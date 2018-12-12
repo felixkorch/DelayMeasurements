@@ -48,6 +48,43 @@ siteSchema.statics.getAllNames = function getAllNames(cb) {
 
 siteSchema.statics.getCalculations = function getCalculations(url, cb) {
 
+    Site.aggregate([
+        {
+            $project: {
+                _id: 0,
+                name: 1,
+                interval: 1,
+                average: {
+                    $avg: '$measurements.duration'
+                },
+                dataPoints: {
+                    $size: '$measurements'
+                },
+                max: {
+                    $max: '$measurements.duration'
+                },
+                min: {
+                    $min: '$measurements.duration'
+                },
+                chartData: {
+                    $slice: ['$measurements', -20]
+                }
+            }
+        },
+        {
+            $match: {
+                name: url
+            }
+        }
+    ], function(err, result) {
+        if(err || result == null) {
+            cb(err, {});
+            return;
+        }
+        result[0].success = true;
+        cb(err, result[0]);
+    });
+    /*
     Site.findOne()
         .where('url').equals(url)
         .select('measurements interval')
@@ -86,7 +123,7 @@ siteSchema.statics.getCalculations = function getCalculations(url, cb) {
 
             res.success = true;
             cb(err, res);
-        });
+        }); */
 }
 
 var Site = mongoose.model('Site', siteSchema, 'sites');
@@ -192,10 +229,10 @@ socket.on('connection', function (socket) {
                     sampleSizes[data.siteName] = 0;
                     res.success = false;
                 }
-                if (size == res.length)
+                if (size == res.dataPoints)
                     res.success = false;
                 else
-                    sampleSizes[data.siteName] = res.length;
+                    sampleSizes[data.siteName] = res.dataPoints;
             }
             fn(res);
         });
