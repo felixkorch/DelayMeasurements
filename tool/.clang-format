@@ -1,0 +1,26 @@
+BasedOnStyle: LLVM
+IndentWidth: 2
+ColumnLimit: 80
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: true
+AllowShortFunctionsOnASingleLine: Empty
+AllowAllParametersOfDeclarationOnNextLine: true
+AlwaysBreakTemplateDeclarations: true
+BinPackParameters: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterNamespace: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterClass: true
+  AfterControlStatement: false
+  BeforeElse: false
+  BeforeCatch: false
+  SplitEmptyFunction: false
+PointerBindsToType: true
+SortIncludes: true
+SpaceAfterTemplateKeyword: false
+UseTab: Never
+
+
+
