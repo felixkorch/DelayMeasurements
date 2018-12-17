@@ -30,8 +30,8 @@ function normalizePort(val) {
     return false;
 }
 const app = express();
-app.set('port', port);
 const port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
 const http = require("http");
 const httpServer = http.Server(app);
 const socket = io.listen(httpServer);
@@ -205,7 +205,7 @@ socket.on('connection', function (socket) {
             fn(res);
         });
     });
- 
+
     socket.on('delete-site', function (req, fn) {
         deleteSite(req.site, function(res) {
             fn(res);
