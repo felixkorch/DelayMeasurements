@@ -135,6 +135,7 @@ var xycharts;
             container.innerHTML +=
                 '<path id="' + this.id + '" d="' + this.path + '"' +
                     'stroke=' + this.pathProperties.stroke + ' stroke-width=' + this.pathProperties.strokeWidth + ' />';
+            container.querySelector('#' + this.id).classList.add('transition');
         };
         return Path;
     }(SVGComponent));
@@ -187,24 +188,44 @@ var xycharts;
     var XYChart = /** @class */ (function () {
         function XYChart(div) {
             this.div = document.getElementById(div);
-            this.offsetX = this.div.offsetWidth * 0.04;
+            this.offsetX = this.div.offsetWidth * 0.05; // Arbitrary constant
             this.offsetY = this.div.offsetHeight * 0.05;
             this.dimensions = { width: this.div.offsetWidth - this.offsetX, height: this.div.offsetHeight - this.offsetY };
             this.components = new Map();
-            this.div.innerHTML = this.renderSVG();
             this.dataCollection = [];
+            this.renderSVG(this.div);
+            // Temporary -------------------------------
+            var head = document.head;
+            var style = document.createElement('style');
+            style.type = 'text/css';
+            style.innerHTML = '.transition { transition: all .4s ease-out; }';
+            head.appendChild(style);
+            // -----------------------------------------
         }
         XYChart.prototype.createDataSet = function () {
             var set = new DataSet();
             this.dataCollection.push(set);
             return set;
         };
-        XYChart.prototype.renderSVG = function (content) {
-            return '<svg id="' + "SVG_DIV" + '" ' +
-                'width="100%" height="100%" ' +
-                'viewBox=" 0 0 ' + this.div.offsetWidth + ' ' + this.div.offsetHeight + '">' +
-                '<g id="' + SVG_DIV + '" transform="translate(' + this.offsetX / 2 + ' ' + this.offsetY / 2 + ')" ></g>' +
-                '</svg>';
+        XYChart.prototype.renderSVG = function (container) {
+            /*
+            let svg = document.createElement('svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%')
+            svg.setAttribute('viewBox', '0 0 ' + this.div.offsetWidth + ' ' + this.div.offsetHeight);
+
+            let mainContainer = document.createElement('g');
+            mainContainer.id = SVG_DIV;
+            mainContainer.setAttribute('transform', 'translate(' + this.offsetX / 2 + ' ' + this.offsetY / 2 + ')');
+
+            svg.appendChild(mainContainer);
+            container.appendChild(svg); */
+            container.innerHTML =
+                '<svg id="' + "SVG_DIV" + '" ' +
+                    'width="100%" height="100%" ' +
+                    'viewBox=" 0 0 ' + this.div.offsetWidth + ' ' + this.div.offsetHeight + '">' +
+                    '<g id="' + SVG_DIV + '" transform="translate(' + this.offsetX / 2 + ' ' + this.offsetY / 2 + ')" ></g>' +
+                    '</svg>';
         };
         XYChart.prototype.createReferenceLines = function (bounds, set) {
             var density = set.properties.density;
@@ -284,13 +305,10 @@ var xycharts;
             return _super.call(this, div) || this;
         }
         LineChart.prototype.connectPoints = function (from, to, path, set) {
-            //path.lineTo(x, y).moveTo(x, y);
-        };
-        LineChart.prototype.createGraph = function () {
-            var path = new Path('graph');
-            path.moveTo(0, 0);
-            path.lineTo(100, 100);
-            return path;
+            for (var i = 0; i < set.data.length; i++) {
+                path.moveTo(from.x, from.y)
+                    .lineTo(to.x, to.y);
+            }
         };
         return LineChart;
     }(XYChart));
