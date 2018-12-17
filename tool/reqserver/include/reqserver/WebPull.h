@@ -32,20 +32,22 @@ class WebPull
   std::int64_t size;
   std::int32_t code;
 
-  static std::size_t write_callback(void *buf, std::size_t size, std::size_t n,
-                                    void *user_data)
+  static std::size_t
+  write_callback(void* buf, std::size_t size, std::size_t n, void* user_data)
   {
-    *static_cast<std::size_t *>(user_data) += size * n;
+    *static_cast<std::size_t*>(user_data) += size * n;
     return size * n;
   }
 
-  WebPull(const SysClock::time_point &date, const Milliseconds &duration,
-          const std::size_t &size, std::uint32_t code)
+  WebPull(const SysClock::time_point& date,
+          const Milliseconds& duration,
+          const std::size_t& size,
+          std::uint32_t code)
       : date(date), duration(duration), size(size), code(code)
   {}
 
-  template <class Lambda>
-  static auto measure_time(const Lambda &f)
+  template<class Lambda>
+  static auto measure_time(const Lambda& f)
   {
     auto now = Clock::now();
     f();
@@ -53,7 +55,7 @@ class WebPull
   }
 
 public:
-  void serialize(bsoncxx::builder::basic::sub_document &doc) const
+  void serialize(bsoncxx::builder::basic::sub_document& doc) const
   {
     using namespace bsoncxx::builder::basic;
 
@@ -62,9 +64,9 @@ public:
                kvp("code", code));
   }
 
-  static WebPull pull_site(const std::string_view &url)
+  static WebPull pull_site(const std::string_view& url)
   {
-    CURL *handle = curl_easy_init();
+    CURL* handle = curl_easy_init();
     curl_easy_setopt(handle, CURLOPT_URL, url.data());
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
     std::size_t size = 0;
