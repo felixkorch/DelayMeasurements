@@ -92,6 +92,11 @@
         getUIData();
     }
 
+    function onRightClickSite(element) {
+        console.log("Right Click!");
+        return false;
+    }
+
     function createSiteList(div, sites) {
         let listElement = document.getElementById(div);
         listElement.innerHTML = '';
@@ -99,8 +104,9 @@
             let child = document.createElement('li');
             child.classList.add('list-group-item');
             child.classList.add('site-panel');
-            child.setAttribute('style', 'cursor: hand;');
+            child.setAttribute('style', 'cursor: pointer;');
             child.setAttribute('onclick', 'onClickSite(this)');
+            child.setAttribute('oncontextmenu', 'return onRightClickSite(this)');
             child.innerHTML = sites[i];
             listElement.appendChild(child);
         }
