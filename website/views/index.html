@@ -1,0 +1,176 @@
+<html>
+
+<head>
+    <title>Response Measurements</title>
+    <meta charset='utf-8' />
+    <script src='javascripts/xycharts.js'></script>
+    <!-- <script language='javascript' src='node_modules/bootstrap/.../bootstrap.min.js'></script> -->
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+    <link rel='stylesheet' href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css'>
+    <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.dev.js'></script>
+
+</head>
+
+<body>
+    <div class='container' id='main-container'>
+        <div class='row' style='padding-top:20px;'>
+            <div class='col-lg-6 col-md-6 col-sm-12 col-xs-12'>
+                <dl class='dl-horizontal' id='measurements-table'>
+                    <dt>Average (ms)</dt>
+                    <dd></dd>
+                    <dt>Max delay (ms)</dt>
+                    <dd></dd>
+                    <dt>Min delay (ms)</dt>
+                    <dd></dd>
+                    <dt>Interval (s)</dt>
+                    <dd></dd>
+                    <dt>Data points</dt>
+                    <dd></dd>
+                </dl>
+            </div>
+            <div class='col-lg-6 col-md-6 col-sm-12 col-xs-12'>
+                <form onsubmit="return onSubmitSite(this);">
+                    <div class='input-group'>
+                        <input type='text' class='form-control' placeholder="http://example.com/" id="add-site">
+                        <span class='input-group-btn'>
+                            <button class='btn btn-primary' type='button'>Add Site</button>
+                        </span>
+                    </div>
+                </form>
+                <ul class="list-group site-group" id="site-list">
+                </ul>
+            </div>
+        </div>
+        <div class='row' style='margin-top:50px'>
+            <div id='graph' style='width: 100%; height:60%; border: 0px solid black' />
+        </div>
+    </div>
+</body>
+
+</html>
+
+<script>
+    var socket = io();
+    var chart = new xycharts.StepLineChart('graph');
+    var dataset = chart.createDataSet();
+
+    dataset.properties.pathProperties = { stroke: xycharts.NICE_BLUE, strokeWidth: 2 };
+    dataset.properties.density = 11;
+    dataset.xKey = 'date';
+    dataset.yKey = 'duration';
+
+    function updateTable(div, data) {
+        let tableElement = document.getElementById(div);
+        let children = tableElement.getElementsByTagName('dd');
+        for (let i = 0; i < children.length; i++) {
+            children[i].innerHTML = data[i];
+        }
+    }
+
+    function onSubmitSite(element) {
+        // Do safety checks
+        let siteName = document.getElementById('add-site').value;
+        console.log('Adding site: ' + siteName);
+        addSite(siteName);
+        element.reset();
+        return false;
+    }
+
+    var activeSite = null;
+
+    function onClickSite(element) {
+        if (element.classList.contains('active')) {
+            element.classList.remove('active');
+            return;
+        }
+        if (activeSite)
+            activeSite.classList.remove('active');
+        element.classList.add('active');
+        activeSite = element;
+        selectedSite = element.innerHTML;
+        getUIData();
+    }
+
+    function createSiteList(div, sites) {
+        let listElement = document.getElementById(div);
+        listElement.innerHTML = '';
+        for (let i = 0; i < sites.length; i++) {
+            let child = document.createElement('li');
+            child.classList.add('list-group-item');
+            child.classList.add('site-panel');
+            child.setAttribute('style', 'cursor: hand;');
+            child.setAttribute('onclick', 'onClickSite(this)');
+            child.innerHTML = sites[i];
+            listElement.appendChild(child);
+        }
+    }
+
+    var selectedSite = 'https://student.portal.chalmers.se/sv/Sidor/default.aspx';
+    var polling = false;
+
+    socket.on('site-changed', function (req) {
+        console.log("site changed for " + req.name);
+        if (selectedSite != req.name || !polling)
+            return;
+
+        const keys = ['average', 'max', 'min', 'interval', 'dataPoints'];
+        let tableData = [];
+        for (let i = 0; i < keys.length; i++)
+            tableData.push(req[keys[i]]);
+
+        updateTable('measurements-table', tableData);
+        dataset.addData(req.chartData[19], 1);
+        chart.draw();
+    });
+
+    function getUIData() {
+        socket.emit('ui-data', selectedSite, function (res) {
+            const keys = ['average', 'max', 'min', 'interval', 'dataPoints'];
+            let tableData = [];
+            for (let i = 0; i < keys.length; i++)
+                tableData.push(res[keys[i]]);
+
+            updateTable('measurements-table', tableData);
+            dataset.data = res.chartData;
+            chart.draw();
+            polling = true;
+        });
+    }
+
+    function requestSiteList() {
+        socket.emit('site-list', function (res) {
+            createSiteList('site-list', res);
+        });
+    }
+
+    function addSite(siteName) {
+        socket.emit('add-site', siteName, function (res) {
+            if (!res.success) {
+                console.log('Something went wrong!');
+                return;
+            }
+            requestSiteList();
+        });
+    }
+
+    getUIData();
+    requestSiteList();
+
+</script>
+
+<style>
+    .dl-horizontal {
+        font-size: 18px;
+    }
+
+    dt,
+    dd {
+        padding-top: 10px;
+        padding-right: 10px;
+    }
+
+    svg path {
+        transition: d 0.35s;
+    }
+</style>
