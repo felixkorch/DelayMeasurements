@@ -18,10 +18,10 @@ namespace reqserver
 
 class CycleCallerBase
 {
-  template <class Rep, class Period>
+  template<class Rep, class Period>
   using duration = std::chrono::duration<Rep, Period>;
 
-  template <class Clock, class Duration>
+  template<class Clock, class Duration>
   using time_point = std::chrono::time_point<Clock, Duration>;
 
   int interval_dur;
@@ -39,16 +39,16 @@ class CycleCallerBase
   }
 
 public:
-  CycleCallerBase(const Milliseconds &interval,
-                  const Milliseconds &progress = Milliseconds(0))
+  CycleCallerBase(const Milliseconds& interval,
+                  const Milliseconds& progress = Milliseconds(0))
       : interval_dur(interval.count()),
         progress(progress.count() % interval.count())
   {}
 
-  template <class Rep1, class Period1, class Rep2, class Period2>
+  template<class Rep1, class Period1, class Rep2, class Period2>
   CycleCallerBase(
-      const duration<Rep1, Period1> &interval,
-      const duration<Rep2, Period2> &progress = duration<Rep2, Period2>::zero())
+      const duration<Rep1, Period1>& interval,
+      const duration<Rep2, Period2>& progress = duration<Rep2, Period2>::zero())
       : CycleCallerBase(milliseconds(interval), milliseconds(progress))
   {}
 
@@ -58,8 +58,8 @@ public:
   ///
   /// Increases the timer by duration without triggering the cycle even if it
   /// passes the interval. Returns true if the interval was passed.
-  template <class Rep, class Period>
-  bool forward(const duration<Rep, Period> &dur)
+  template<class Rep, class Period>
+  bool forward(const duration<Rep, Period>& dur)
   {
     return advance(milliseconds(dur).count());
   }
@@ -70,8 +70,8 @@ public:
   ///
   /// Increases the timer by duration and triggers the call if it passes the
   /// interval. Returns true if the interval was passed.
-  template <class Rep, class Period>
-  bool increment(const duration<Rep, Period> &dur)
+  template<class Rep, class Period>
+  bool increment(const duration<Rep, Period>& dur)
   {
     if (advance(milliseconds(dur).count())) {
       trigger();
@@ -80,45 +80,49 @@ public:
     return false;
   }
 
-  auto interval() const { return Milliseconds(interval_dur); }
+  auto interval() const
+  {
+    return Milliseconds(interval_dur);
+  }
 
-  void set_interval(const Milliseconds &new_value)
+  void set_interval(const Milliseconds& new_value)
   {
     interval_dur = new_value.count();
   }
 };
 
-template <class Lambda>
+template<class Lambda>
 class CycleCaller : public CycleCallerBase
 {
-  template <class Rep, class Period>
+  template<class Rep, class Period>
   using duration = std::chrono::duration<Rep, Period>;
 
   const Lambda f;
 
-  void trigger() { f(); }
+  void trigger()
+  {
+    f();
+  }
 
 public:
-  template <class Rep, class Period>
-  CycleCaller(const duration<Rep, Period> &interval, const Lambda &f)
+  template<class Rep, class Period>
+  CycleCaller(const duration<Rep, Period>& interval, const Lambda& f)
       : f(f), CycleCallerBase(interval)
-  {
-    
-  }
+  {}
 };
 
-template <class Rep, class Period, class Lambda>
+template<class Rep, class Period, class Lambda>
 static auto
-unique_cycle_caller(const std::chrono::duration<Rep, Period> &interval,
-                    const Lambda &f)
+unique_cycle_caller(const std::chrono::duration<Rep, Period>& interval,
+                    const Lambda& f)
 {
   return std::make_unique<CycleCaller<Lambda>>(interval, f);
 }
 
-template <class Rep, class Period, class Lambda>
+template<class Rep, class Period, class Lambda>
 static auto
-shared_cycle_caller(const std::chrono::duration<Rep, Period> &interval,
-                    const Lambda &f)
+shared_cycle_caller(const std::chrono::duration<Rep, Period>& interval,
+                    const Lambda& f)
 {
   return std::make_shared<CycleCaller<Lambda>>(interval, f);
 }

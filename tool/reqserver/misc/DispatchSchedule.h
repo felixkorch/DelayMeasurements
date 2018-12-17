@@ -10,9 +10,9 @@
 #define REQSERVER_DISPATCHSCHEDULE_H
 
 #include "reqserver/Time.h"
-#include <memory>
-#include <forward_list>
 #include <algorithm>
+#include <forward_list>
+#include <memory>
 
 namespace reqserver
 {
@@ -30,7 +30,9 @@ public:
   BaseTask(Clock::time_point t) : exc_time_point(t) {}
 
   Clock::time_point time() const
-  { return exc_time_point; }
+  {
+    return exc_time_point;
+  }
 
   virtual void trigger() const {}
 };
@@ -40,7 +42,7 @@ public:
 ///
 /// Subclass of 'BaseTask' that overrides the virtual function 'trigger' with
 /// a stored clousure object. This way it can be used in a 'DispatchSchedule'.
-template <typename Lambda>
+template<typename Lambda>
 class Task : public BaseTask
 {
   Lambda f;
@@ -49,7 +51,9 @@ public:
   Task(Clock::time_point t, const Lambda& f) : BaseTask(t), f(f) {}
 
   void trigger() const
-  { f(); }
+  {
+    f();
+  }
 };
 
 ///===--------------------------------------------------------------------===///
@@ -58,9 +62,11 @@ public:
 ///   @f: Lambda to be triggered.
 ///
 /// Helper function creating unique pointers to 'Task' objects.
-template <typename Lambda>
+template<typename Lambda>
 auto unique_task(const Clock::time_point& t, const Lambda& f)
-{ return std::make_unique<Task<Lambda>>(t, f); }
+{
+  return std::make_unique<Task<Lambda>>(t, f);
+}
 
 ///===--------------------------------------------------------------------===///
 /// class: DispatchSchedule
@@ -72,27 +78,28 @@ class DispatchSchedule
   std::forward_list<std::unique_ptr<const BaseTask>> list;
 
 public:
-
   DispatchSchedule() : ready(true), proc_count(0) {}
 
   auto schedule(std::unique_ptr<const BaseTask>&& element)
   {
-    if(list.empty()) {
+    if (list.empty()) {
       list.push_front(std::move(element));
       return list.cbegin();
     }
     auto it = list.cbefore_begin();
-    for(auto end = list.cend(); std::next(it) != end; ++it) {
-      if(element->time() < (*std::next(it))->time())
+    for (auto end = list.cend(); std::next(it) != end; ++it) {
+      if (element->time() < (*std::next(it))->time())
         break;
     }
     list.insert_after(it, std::move(element));
     return std::next(it);
   }
 
-  template <typename Lambda>
+  template<typename Lambda>
   auto schedule(Clock::time_point time, const Lambda& f)
-  { return schedule(unique_task(time, f)); }
+  {
+    return schedule(unique_task(time, f));
+  }
 
   auto trigger_until(const Clock::time_point& time)
   {
@@ -100,29 +107,31 @@ public:
 
     decltype(list) execute_list;
     execute_list.splice_after(
-        execute_list.cbefore_begin(),
-        list,
-        list.cbefore_begin(),
-        std::find_if(list.cbegin(),
-                     list.cend(),
+        execute_list.cbefore_begin(), list, list.cbefore_begin(),
+        std::find_if(list.cbegin(), list.cend(),
                      [time](auto& x) { return x->time() > time; }));
     ready = true;
     ++proc_count;
-    std::for_each(execute_list.cbegin(),
-                  execute_list.cend(),
+    std::for_each(execute_list.cbegin(), execute_list.cend(),
                   [](auto& x) { x->trigger(); });
     --proc_count;
     return std::distance(execute_list.cbegin(), execute_list.cend());
   }
 
   auto is_empty() const
-  { return list.empty(); }
+  {
+    return list.empty();
+  }
 
   auto is_ready() const
-  { return ready; }
+  {
+    return ready;
+  }
 
   auto is_running() const
-  { return proc_count > 0; }
+  {
+    return proc_count > 0;
+  }
 };
 
 } // namespace reqserver

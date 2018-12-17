@@ -9,11 +9,14 @@
 #ifndef REQSERVER_SETTINGS_H
 #define REQSERVER_SETTINGS_H
 
+#include "reqserver/JSONFormat.h"
+#include "reqserver/Util.h"
 #include <bsoncxx/json.hpp>
 #include <bsoncxx/types.hpp>
 #include <fcntl.h>
 #include <memory>
 #include <mongocxx/uri.hpp>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -25,7 +28,11 @@ namespace reqserver
 
 class Settings
 {
-  static const auto read_file(const std::string_view &path)
+public:
+  const static int version = 2;
+
+private:
+  static const auto read_file(const std::string_view& path)
   {
     auto error = [&path]() {
       std::stringstream stream;
@@ -51,23 +58,49 @@ class Settings
     return std::move(data);
   }
 
-  bsoncxx::document::value jobj;
-
-public:
-  Settings(const std::string_view &path = "reqserver.json")
-      : jobj(bsoncxx::from_json(read_file(path).get()))
-  {}
-
-  const mongocxx::uri mongo_uri()
+  static void write_file(const std::string_view& path,
+                         const std::string_view& str)
   {
-    return bsoncxx::string::view_or_value(
-        jobj.view()["mongo-uri"].get_utf8().value);
+    auto fd = open(path.data(), O_WRONLY);
+    if (fd < 0) {
+      std::stringstream stream;
+      stream << "Failed to write file '" << path << "'";
+      warning(stream.str(), __FILE__, __LINE__);
+      return;
+    }
+    ftruncate(fd, 0);
+    write(fd, str.data(), str.size());
+    close(fd);
   }
 
-  const std::string mongo_database()
+  Format<version> dict;
+
+  static Format<version> decode(const bsoncxx::document::view& doc)
   {
-    auto view = jobj.view()["mongo-database"].get_utf8().value;
-    return std::string(view.begin(), view.end());
+    auto dict = Format<version>::decode(doc);
+    if (!dict.has_value())
+      throw std::runtime_error("Could not decode 'reqserver.json'");
+    return dict.value();
+  }
+
+public:
+  Settings(const std::string_view& path = "reqserver.json")
+      : dict(decode(bsoncxx::from_json(read_file(path).get())))
+  {
+    write_file(path, dict.serialize());
+  }
+
+  mongocxx::uri mongo_uri() const
+  {
+    std::stringstream stream;
+    stream << dict.protocol << "://" << dict.user << ':' << dict.password << '@'
+           << dict.host << ':' << dict.port << '/' << dict.database;
+    return bsoncxx::string::view_or_value(stream.str());
+  }
+
+  std::string database() const
+  {
+    return dict.database;
   }
 };
 

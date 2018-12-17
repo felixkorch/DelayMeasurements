@@ -16,6 +16,10 @@ endif()
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(${REQSERVER_INCLUDE_DIR})
 
+# NOTE:
+# Local fix that should not be included in commits.
+link_directories("/usr/local/lib")
+
 find_package(CURL REQUIRED)
 find_package(libmongocxx REQUIRED)
 

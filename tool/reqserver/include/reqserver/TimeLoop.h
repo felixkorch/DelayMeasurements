@@ -80,7 +80,7 @@ public:
 };
 
 template<class Frame>
-auto pokus_time_loop(Frame&& frame)
+auto make_time_loop(Frame&& frame)
 {
   return TimeLoop<Frame>(std::move(frame));
 }
