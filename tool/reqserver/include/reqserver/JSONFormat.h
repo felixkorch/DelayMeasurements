@@ -3,7 +3,7 @@
 // License goes here.
 //===----------------------------------------------------------------------===//
 //
-// Makes sure the reqserver.json is always in the latest encoding format.
+// Makes sure the file 'reqserver.json' is always in the latest encoding format.
 //===----------------------------------------------------------------------===//
 
 #ifndef REQSERVER_JSONFORMAT_H
@@ -57,7 +57,6 @@ struct Format {
 
 template<>
 struct Format<1> {
-  using Self = Format<1>;
   const static std::uint32_t version = 1;
 
   std::string mongo_uri;
@@ -70,7 +69,7 @@ private:
   {}
 
 public:
-  static std::optional<Self> decode(const bsoncxx::document::view& doc)
+  static std::optional<Format> decode(const bsoncxx::document::view& doc)
   {
     auto validated =
         ValidDocument::validate(doc, {"mongo-uri", "mongo-database"});
@@ -82,7 +81,6 @@ public:
 
 template<>
 struct Format<2> {
-  using Self = Format<2>;
   const static std::uint32_t version = 2;
 
   std::string protocol;

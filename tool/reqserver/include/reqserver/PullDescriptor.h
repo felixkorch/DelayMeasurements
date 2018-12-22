@@ -14,6 +14,7 @@
 #include <bsoncxx/document/element.hpp>
 #include <bsoncxx/types.hpp>
 #include <cstdint>
+#include <mongocxx/collection.hpp>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -63,6 +64,32 @@ public:
   auto key() const
   {
     return oid;
+  }
+
+  /// --------------------------------------------------------------------------
+  /// \func: auto each_descriptor()
+  ///
+  template<class Lambda>
+  void static each_descriptor(mongocxx::collection& collection,
+                              const Lambda& lambda)
+  {
+    using namespace bsoncxx::builder::basic;
+
+    // Get cursor of header data from server.
+    auto cursor = collection.aggregate(mongocxx::pipeline().project(
+        make_document(kvp("name", true), kvp("url", true),
+                      kvp("interval", true), kvp("date", [](sub_document doc) {
+                        doc.append(kvp("$max", "$measurements.date"));
+                      }))));
+    std::for_each(cursor.begin(), cursor.end(), [&lambda](auto&& doc) {
+      // Exceptions may arise if the format of a document does not comply to
+      // PullDescriptor.
+      try {
+        lambda(PullDescriptor(doc));
+      } catch (const std::exception& exception) {
+        warning(exception, __FILE__, __LINE__);
+      }
+    });
   }
 };
 
