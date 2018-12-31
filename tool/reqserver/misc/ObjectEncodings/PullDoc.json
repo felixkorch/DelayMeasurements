@@ -1,0 +1,13 @@
+{
+    "_id": "OID",
+    "name": "String",
+    "url": "String",
+    "interval": "Int32->Milliseconds",
+    "measurements": [
+        {
+            "date": "Date",
+            "duration": "Int32->Milliseconds",
+            "code": "Int32"
+        }
+    ]
+}

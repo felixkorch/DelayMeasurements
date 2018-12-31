@@ -1,0 +1,3 @@
+# Old reqserver settings files can be stored without the risk of commiting login
+# details to git.
+reqserver.*.json

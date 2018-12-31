@@ -10,46 +10,33 @@
 #ifndef REQSERVER_UTIL_H
 #define REQSERVER_UTIL_H
 
+#include "reqserver/DebugDescriptor.h"
 #include <bsoncxx/types.hpp>
 #include <iostream>
+#include <optional>
 
 namespace reqserver
 {
+
 bool operator<(const bsoncxx::types::b_oid& a, const bsoncxx::types::b_oid& b)
 {
   return a.value < b.value;
 }
 
-class OID
+template<class Lambda>
+std::optional<std::invoke_result_t<Lambda>> try_optional(const Lambda& f)
 {
-  bsoncxx::types::b_oid raw_value;
-
-public:
-  OID(bsoncxx::types::b_oid raw_value) : raw_value(raw_value) {}
-
-  auto bson() const
-  {
-    return raw_value;
+  try {
+    return f();
+  } catch (...) {
+    return std::nullopt;
   }
-
-  friend bool operator<(const OID& a, const OID& b);
-  friend bool operator==(const OID& a, const OID& b);
-};
-
-bool operator<(const OID& a, const OID& b)
-{
-  return a.raw_value < b.raw_value;
-}
-
-bool operator==(const OID& a, const OID& b)
-{
-  return a.raw_value == b.raw_value;
 }
 
 void warning(const std::string& message, const char* file, int line)
 {
-  std::cerr << '[' << SysClock::now() << "] Warning " << file << ':' << line
-            << " - " << message << '\n';
+  std::cerr << '[' << DebugDescriptor(std::chrono::system_clock::now())
+            << "] Warning " << file << ':' << line << " - " << message << '\n';
 }
 
 template<class Exception>
@@ -79,12 +66,10 @@ std::string to_string(const bsoncxx::document::element& element)
   return std::string(element.get_utf8().value);
 }
 
-static std::optional<SysClock::time_point>
+static std::chrono::system_clock::time_point
 to_date(const bsoncxx::document::element& element)
 {
   switch (element.type()) {
-  case bsoncxx::type::k_null:
-    return std::nullopt;
   case bsoncxx::type::k_date:
     return element.get_date();
   default:

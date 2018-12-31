@@ -1,0 +1,7 @@
+{
+    "_id": "OID",
+    "name": "String",
+    "url": "String->URL",
+    "interval": "Int32->Milliseconds",
+    "recentPullDate": "Date?"
+}

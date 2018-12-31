@@ -67,7 +67,7 @@ public:
   template<class TimePoint>
   void time_changed(const TimePoint& old_time, const TimePoint& new_time)
   {
-    // DEBUG
+    // DEBUG:
     // std::cout << " {old: " << old_time << ", new: " << new_time
     //           << ", delta: " << milliseconds(new_time - old_time).count()
     //           << "}\n";
@@ -78,7 +78,7 @@ public:
 
     // Named tuple that stores the time point the pull should be made, the id of
     // the document on the database and the URL to the website to be pulled.
-    using Element = std::tuple<TimePoint, OID, std::string>;
+    using Element = std::tuple<TimePoint, bsoncxx::oid, std::string>;
 
     // Create a priority queue that stores all pulls that should be performed
     // until the next click.
@@ -88,31 +88,27 @@ public:
     std::priority_queue<Element, std::vector<Element>, decltype(comparator)>
         queue(std::move(comparator));
 
-    PullDescriptor::each_descriptor(collection, [&new_time, &queue](
-                                                    const auto& descriptor) {
-      // Make stride iterator that iterates over the times a pull should be
-      // performed for the descriptor.
-      const auto& stride = descriptor.interval;
-      const auto& pull_time = descriptor.date.value_or(new_time);
-      StrideIterator it(new_time + stride - (new_time - pull_time) % stride,
-                        stride);
+    PullDescriptor::each_descriptor(
+        collection, [&new_time, &queue](const auto& descriptor) {
+          // If no previous pulls has been made for the descriptor it should be
+          // downloaded as soon as possible.
+          if (!descriptor.date.has_value())
+            queue.emplace(new_time, descriptor.oid, descriptor.url);
 
-      // If no previous pulls has been made for the descriptor it should be
-      // downloaded as soon as possible.
-      if (!descriptor.date.has_value())
-        queue.emplace(
-            std::make_tuple(new_time, descriptor.key(), descriptor.url));
-
-      // Queue all pulls that should be performed until the next click from the
-      // time loop.
-      //
-      // TODO:
-      // It is assumed that the distance between each click is equal to
-      // 'time_loop_interval'. Find a more general and maintanable solution.
-      const auto end = new_time + time_loop_interval;
-      for (; *it < end; ++it)
-        queue.emplace(std::make_tuple(*it, descriptor.key(), descriptor.url));
-    });
+          // Create a stride iterator that can queue all pulls that should be
+          // made between the last click and the next one.
+          const auto& stride = descriptor.interval;
+          StrideIterator it(
+              new_time + stride -
+                  (new_time - descriptor.date.value_or(new_time)) % stride,
+              stride);
+          // TODO:
+          // It is assumed that the distance between each click is equal to
+          // 'time_loop_interval'. Find a more general and maintanable solution.
+          const auto end = new_time + time_loop_interval;
+          for (; *it < end; ++it)
+            queue.emplace(*it, descriptor.oid, descriptor.url);
+        });
 
     while (!queue.empty()) {
       // The top element is always the one with that should be pulled the
@@ -124,23 +120,21 @@ public:
       // Blocks until it is time to download the website.
       std::this_thread::sleep_until(time);
 
-      std::cout << '[' << std::chrono::system_clock::now() << "] pulling from '"
-                << url << "'\n";
+      std::cout << '[' << DebugDescriptor(std::chrono::system_clock::now())
+                << "] pulling from '" << url << "'\n";
 
       try {
         using namespace bsoncxx::builder::basic;
         collection.update_one(
-            make_document(kvp("_id", id.bson())),
+            make_document(kvp("_id", id)),
             make_document(kvp("$push", [&url](sub_document doc) {
               doc.append(kvp("measurements", [&url](sub_document doc) {
+                // TODO:
                 // This call is currently blocking until the website is fully
-                // downloaded.
-                //
-                // It's possible to thread each call but it would
+                // downloaded. It's possible to thread each call but it would
                 // not scale since each thread would require it's own client and
-                // connection to the database.
-                //
-                // A preferable solution is to do the pulls using multi curl.
+                // connection to the database. A preferable solution is to do
+                // the pulls using multi curl.
                 WebPull::pull_site(url).serialize(doc);
               }));
             })));

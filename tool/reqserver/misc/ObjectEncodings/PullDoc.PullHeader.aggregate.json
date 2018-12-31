@@ -1,0 +1,10 @@
+{
+    "$project": {
+        "name": true,
+        "url": true,
+        "interval": true,
+        "recentPullDate": {
+            "$max": "$measurements.date"
+        }
+    }
+}

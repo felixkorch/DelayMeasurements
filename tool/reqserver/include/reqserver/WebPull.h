@@ -10,25 +10,23 @@
 #ifndef REQSERVER_WEBPULL_H
 #define REQSERVER_WEBPULL_H
 
-#include "reqserver/Time.h"
 #include <bsoncxx/builder/basic/document.hpp>
 #include <bsoncxx/builder/basic/kvp.hpp>
 #include <bsoncxx/types.hpp>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <curl/curl.h>
 #include <string>
 
-#include <iostream>
-
 namespace reqserver
 {
 
 class WebPull
 {
-  SysClock::time_point date;
-  Milliseconds duration;
+  std::chrono::system_clock::time_point date;
+  std::chrono::milliseconds duration;
   std::int64_t size;
   std::int32_t code;
 
@@ -39,8 +37,8 @@ class WebPull
     return size * n;
   }
 
-  WebPull(const SysClock::time_point& date,
-          const Milliseconds& duration,
+  WebPull(const std::chrono::system_clock::time_point& date,
+          const std::chrono::milliseconds& duration,
           const std::size_t& size,
           std::uint32_t code)
       : date(date), duration(duration), size(size), code(code)
@@ -49,9 +47,9 @@ class WebPull
   template<class Lambda>
   static auto measure_time(const Lambda& f)
   {
-    auto now = Clock::now();
+    auto now = std::chrono::steady_clock::now();
     f();
-    return Clock::now() - now;
+    return std::chrono::steady_clock::now() - now;
   }
 
 public:
@@ -71,15 +69,17 @@ public:
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
     std::size_t size = 0;
     curl_easy_setopt(handle, CURLOPT_WRITEDATA, &size);
-    auto date = SysClock::now();
-    // When I store both start and stop the clocks gets messed up. It seems to
-    // work when I only store start timer.
+    auto date = std::chrono::system_clock::now();
+    // When the start and stop time is called from this function the duration
+    // gets messed up. This is a simple hack that fixes it.
     auto duration = measure_time([handle] { curl_easy_perform(handle); });
     std::int64_t code = 0;
     curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
     curl_easy_cleanup(handle);
 
-    return WebPull(date, milliseconds(duration), size, code);
+    return WebPull(
+        date, std::chrono::duration_cast<std::chrono::milliseconds>(duration),
+        size, code);
   }
 };
 
