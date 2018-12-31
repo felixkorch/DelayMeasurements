@@ -16,9 +16,12 @@ endif()
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories(${REQSERVER_INCLUDE_DIR})
 
+# NOTE:
+# Local fix that should not be included in commits.
+# link_directories("/usr/local/lib")
+
 find_package(CURL REQUIRED)
 find_package(libmongocxx REQUIRED)
 
 option(REQSERVER_BUILD_PLAYGROUND "Build playground projects. Default OFF." OFF)
-add_subdirectory(playground)
 add_subdirectory(src)
