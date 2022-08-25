@@ -1,0 +1,42 @@
+
+# Returns durationdata
+db.sites.aggregate(
+    {$match: {name: "Stackoverflow"}},
+    {$unwind: "$measurements"},
+    {$group:{
+        _id: null,
+        max: { $max: "$measurements.duration" },
+        min: { $min: "$measurements.duration" },
+        mean: { $avg: "$measurements.duration" },
+        }
+    }
+  )
+
+# Returns the n first elements
+db.sites.aggregate(
+    {$match: {name: "Stackoverflow"}},
+    {$unwind: "$measurements"},
+    {$sort: { "measurements.date": -1 } },
+    {$limit: 10 },
+    {$project: { "date": "$measurements.date" , "duration": "$measurements.duration" , "code": "$measurements.code"  }}
+  )
+
+# Returns the counts for every return code
+db.sites.aggregate(
+    {$match: {name: "Stackoverflow"}},
+    {$unwind: "$measurements"},
+    {$group: { _id: "$measurements.code", count: { $sum: 1 } }}
+  )
+
+# Returns all measurements between two dates 
+db.sites.aggregate(
+    {$match: {name: "Stackoverflow"}},
+    {$unwind: "$measurements"},
+    {$match: { "measurements.date": { $gte: new ISODate( "2022-08-21" ), $lte: new ISODate( "2022-08-22" ) } }},
+    {$project: { "date": "$measurements.date" , "duration": "$measurements.duration" , "code": "$measurements.code"  }}
+  )
+
+  # TODO:
+  # Timeline (per day)
+  # Report. Statistical correlation? Time of day / Day of week
+  # Group data points on a threshold duration

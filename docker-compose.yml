@@ -1,0 +1,47 @@
+version: "3.9"
+services:
+  delay-frontend:
+    build: docker/frontend
+    environment:
+      - ENV_USER=${DB_USER}
+      - ENV_PASS=${DB_PASS}
+      - ENV_HOST=${DB_HOST}
+      - ENV_DB=${DB_TO_USE}
+    ports:
+      - "3000:3000"
+
+  delay-frontend:
+    build: docker/backend
+    environment:
+      - ENV_USER=${DB_USER}
+      - ENV_PASS=${DB_PASS}
+      - ENV_HOST=${DB_HOST}
+      - ENV_DB=${DB_TO_USE}
+    ports:
+      - "5000:5000"
+
+  delay-db:
+    restart: always
+    build: docker/database
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${DB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_PASS}
+      - MONGO_INITDB_DATABASE=${DB_TO_USE}
+    volumes:
+      - ./docker/database/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27017:27017"
+
+  delay-tool:
+    build: docker/tool/mount
+    environment:
+      - ENV_USER=${DB_USER}
+      - ENV_PASS=${DB_PASS}
+      - ENV_HOST=${DB_HOST}
+      - ENV_DB=${DB_TO_USE}
+    ports:
+      - "5011:5011"
+    volumes:
+      - ./tool:/delay-tool
+    tty: true
+    working_dir: /delay-tool
