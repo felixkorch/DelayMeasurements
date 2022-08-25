@@ -11,7 +11,6 @@ DB_HOST=delay-db
 2. To set-up an environment for the C++ tool & a mongo-db run:
 ```
 docker-compose -f docker-compose.tool.yml up -d --build
-
 ```
 
 Note: This will mirror your local tool folder into the container, so changes will automatically be applied.
