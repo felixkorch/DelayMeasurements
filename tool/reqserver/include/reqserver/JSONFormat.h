@@ -35,7 +35,7 @@ class ValidDocument
 public:
   static std::optional<ValidDocument>
   validate(const bsoncxx::document::view& document,
-           const std::vector<const std::string>& required)
+          std::vector<std::string>&& required)
   {
     for (auto& key : required) {
       if (document.find(key) == document.end())

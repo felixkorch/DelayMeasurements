@@ -10,6 +10,7 @@
 #define REQSERVER_DEBUGDESCRIPTOR_H
 
 #include <iostream>
+#include <chrono>
 
 template<class T>
 struct DebugDescriptor {
