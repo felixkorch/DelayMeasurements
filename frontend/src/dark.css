@@ -1,0 +1,35 @@
+/** Dark mode
+**/
+  
+.App.dark .main {
+    background-color: #343A40;
+}
+
+.App.dark .sidebar-wrapper {
+    background-color: #3A444E;
+    border-right: 1px solid #666666;
+    color: white;
+}
+
+.App.dark .sidebar-li .nav-link {
+    color: white;
+}
+
+.App.dark .sidebar-li .side-icon {
+    margin-right: 15px;
+    color: white;
+}
+
+.App.dark .sidebar-li .nav-link.active {
+    background-color: #ffffff30;
+}
+
+.App.dark .card {
+    background-color: #37404A;
+    color: white;
+}
+
+.App.dark .table {
+    background-color: #444E5A;
+    color: white;
+}
