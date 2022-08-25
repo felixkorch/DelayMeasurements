@@ -135,10 +135,7 @@ a {
 .add-site-button {
   position: relative;
   top:20px;
-}
-
-.add-site-icon {
-  color: white;
+  border-radius: 50%;
 }
 
 .site-modify-error {

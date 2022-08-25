@@ -8,6 +8,7 @@ import Container from 'react-bootstrap/Container';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
 import { BsArrowCounterclockwise, BsFillTrashFill, BsPlus } from "react-icons/bs";
+import { AiOutlinePlus } from 'react-icons/ai';
 import { useFormik } from "formik";
 import * as Yup from "yup";
 
@@ -161,7 +162,7 @@ function PageModify() {
 
         <Row>
           <Col md="auto">
-            <Button className='add-site-button rounded-circle' variant="primary" onClick={handleNewItem}> <BsPlus className='add-site-icon'/> </Button>
+            <Button className='add-site-button' variant="primary" onClick={handleNewItem}> <AiOutlinePlus /> </Button>
           </Col>
         </Row>
       </Container>
