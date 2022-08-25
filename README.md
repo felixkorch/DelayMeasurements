@@ -19,16 +19,20 @@ Note: This will mirror your local tool folder into the container, so changes wil
 ## Building the web-server
 
 ### Backend: 
-1. Export two variables in current terminal so the backend can connect to the DB.
+1. Create a new virtual environment and activate it
 ```
-EXPORT ENV_USER=defaultUser
-EXPORT ENV_PASS=defaultPass
+python -m venv env && source env/Scripts/activate
 ```
-2.  Run this to install dependencies
+2. Export two variables in current terminal so the backend can connect to the DB.
 ```
-pip3 install -r requirements.txt
+export ENV_USER=defaultUser
+export ENV_PASS=defaultPass
 ```
-3. Start the server:
+3.  Run this to install dependencies
+```
+pip install -r requirements.txt
+```
+4. Start the server:
 ```
 flask run
 ```
