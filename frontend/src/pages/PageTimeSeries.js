@@ -1,19 +1,29 @@
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
+// Bootstrap
+import Card from 'react-bootstrap/Card';
+
+// Libs
 import ReactApexChart from "react-apexcharts";
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
+// React
+import { useState, useEffect, useContext } from 'react';
+
+// Local
 import { Api } from '../Api.js'
-import { useAfterFirstRender, formatDate } from '../scripts/utilities.js';
-import { useState, useEffect } from 'react';
+import { formatDate } from '../scripts/utilities.js';
+import { ColorModeContext } from '../components/SideBar.js'
+
+const DARKMODE_FORE_COLOR = '#ffffffc7';
+const LIGHTMODE_FORE_COLOR = '#000000';
 
 const MyDayPicker = (props) => {
   const [selected, setSelected] = useState(new Date());
+  const colorMode = useContext(ColorModeContext);
+  const styleColor = colorMode == 'dark' ? DARKMODE_FORE_COLOR : LIGHTMODE_FORE_COLOR;
 
   // Calls parent when selected changes
-  useAfterFirstRender(() => {
+  useEffect(() => {
     props.onSelect(selected);
   }, [selected]);
 
@@ -22,6 +32,11 @@ const MyDayPicker = (props) => {
       mode="single"
       selected={selected}
       onSelect={setSelected}
+      style={{color: styleColor}}
+      modifiersClassNames={{
+        selected: 'my-selected',
+        today: 'my-today'
+      }}
     />
   );
 }
@@ -33,12 +48,17 @@ const getSeries = (data) => {
   }];
 }
 
-const getOptions = () => {
+
+const getOptions = (colorMode) => {
+  const foreColor = colorMode == 'dark' ? DARKMODE_FORE_COLOR : LIGHTMODE_FORE_COLOR;
+  const toolTipBg = colorMode == 'dark' ? 'dark' : 'light';
+
   return {
     chart: {
       type: 'area',
       stacked: false,
       height: 500,
+      foreColor: foreColor,
       zoom: {
         type: 'x',
         enabled: true,
@@ -82,6 +102,7 @@ const getOptions = () => {
       type: 'datetime',
     },
     tooltip: {
+      theme: toolTipBg,
       shared: false,
       y: {
         formatter: function (val) {
@@ -96,15 +117,15 @@ function PageTimeSeries() {
 
   const [measurements, setMeasurements] = useState([]);
   const [selected, setSelected] = useState("");
-  const [day, setDay] = useState(null);
+  const [day, setDay] = useState(new Date());
   const [sites, setSites] = useState([]);
+  const colorMode = useContext(ColorModeContext);
 
   // Get the sites on mount
   useEffect(() => {
     Api.get('sites')
       .then((response) => {
         const len = response.data.length;
-        console.log(len);
         setSites(response.data);
         setSelected(len ? response.data[0].name : "");
       }).catch((error) => {
@@ -112,11 +133,11 @@ function PageTimeSeries() {
       })
   }, []);
 
-  useAfterFirstRender(() => {
+  useEffect(() => {
     if (selected == "")
       return;
     getMeasurements();
-  }, [day]);
+  }, [day, selected]);
 
   function getMeasurements() {
     const nextDay = new Date(day);
@@ -139,19 +160,23 @@ function PageTimeSeries() {
   }
 
   return (
-    <div className='stats-wrapper'>
-      <Container fluid>
-        <Row>
-          <Col xs={12}>
-            <ReactApexChart options={getOptions()} series={getSeries(measurements)} type="area" height={500} />
-          </Col>
-        </Row>
-        <Row>
-          <Col xs={{ span: 4, offset: 4 }}>
-            <MyDayPicker onSelect={d => setDay(d)} />
-          </Col>
-        </Row>
-      </Container>
+    <div className='time-wrapper'>
+      <Card>
+        <div style={{ display: "flex", flexFlow: "column nowrap", padding: "10px" }}>
+          <div style={{ display: "flex", flexFlow: "row nowrap"}}>
+            <ReactApexChart
+              style={{flex: 1}}
+              options={getOptions(colorMode)}
+              series={getSeries(measurements)}
+              height="500px"
+              type="area" />
+          </div>
+          <div style={{ display: "flex", flexFlow: "row nowrap",  justifyContent: "center" }}>
+            <MyDayPicker
+              onSelect={d => setDay(d)} />
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

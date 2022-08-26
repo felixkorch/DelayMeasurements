@@ -1,18 +1,33 @@
-import { useEffect, useState } from 'react';
-import { Api } from '../Api.js'
+// React
+import { useEffect, useState, useContext } from 'react';
 
+// Local
+import { Api } from '../Api.js'
+import { ColorModeContext } from '../components/SideBar.js';
+
+// Bootstrap
 import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
 import Row from 'react-bootstrap/Row';
 import Container from 'react-bootstrap/Container';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
+
+// Icons
 import { BsArrowCounterclockwise, BsFillTrashFill, BsPlus } from "react-icons/bs";
 import { AiOutlinePlus } from 'react-icons/ai';
+
+// Libs
 import { useFormik } from "formik";
 import * as Yup from "yup";
 
+const DARKMODE_INPUT_CLASSES = 'bg-dark text-white-50 border-0';
+const LIGHTMODE_INPUT_CLASSES = '';
+
 function UpdateCard(props) {
+
+  const colorMode = useContext(ColorModeContext);
+  const inputStyleClasses = colorMode == 'dark' ? DARKMODE_INPUT_CLASSES : LIGHTMODE_INPUT_CLASSES;
 
   const UpdateSchema = Yup.object().shape({
     name: Yup.string()
@@ -43,31 +58,47 @@ function UpdateCard(props) {
   }
 
   return (
-    <Card>
-      <Card.Body>
-        <Container fluid>
-          <Row>
-            <Col md={12} lg={3} >
-              <Form.Control isInvalid={formik.errors.name} id="name" placeholder="Site name" defaultValue={props.name} onChange={changeHandler} />
-              <div className="site-modify-error">{formik.errors.name}</div>
-            </Col>
-            <Col md={12} lg={4}>
-              <Form.Control isInvalid={formik.errors.url} id="url" placeholder="Url" defaultValue={props.url} onChange={changeHandler} />
-              <div className="site-modify-error">{formik.errors.url}</div>
-            </Col>
-            <Col md={12} lg={2}>
-              <Form.Control isInvalid={formik.errors.interval} id="interval" placeholder="Interval" defaultValue={props.interval} onChange={changeHandler} />
-              <div className="site-modify-error">{formik.errors.interval}</div>
-            </Col>
-            <Col md={12} lg={3}>
-              <Button variant="outline-primary" onClick={formik.handleSubmit} > <BsArrowCounterclockwise /> </Button>
-              <Button variant="outline-danger" onClick={props.onDelete} style={{ marginLeft: "5px" }}> <BsFillTrashFill /> </Button>
-            </Col>
-          </Row>
+    <div style={{ padding: "10px" }}>
+      <Container fluid>
+        <Row>
+          <Col md={12} lg={3} >
+            <Form.Control
+              className={inputStyleClasses}
+              isInvalid={formik.errors.name}
+              id="name"
+              placeholder="Site name"
+              defaultValue={props.name}
+              onChange={changeHandler} />
+            <div className="site-modify-error">{formik.errors.name}</div>
+          </Col>
+          <Col md={12} lg={4}>
+            <Form.Control
+              className={inputStyleClasses}
+              isInvalid={formik.errors.url}
+              id="url"
+              placeholder="Url"
+              defaultValue={props.url}
+              onChange={changeHandler} />
+            <div className="site-modify-error">{formik.errors.url}</div>
+          </Col>
+          <Col md={12} lg={2}>
+            <Form.Control
+              className={inputStyleClasses}
+              isInvalid={formik.errors.interval}
+              id="interval"
+              placeholder="Interval"
+              defaultValue={props.interval}
+              onChange={changeHandler} />
+            <div className="site-modify-error">{formik.errors.interval}</div>
+          </Col>
+          <Col md={12} lg={3}>
+            <Button variant="primary" onClick={formik.handleSubmit} > <BsArrowCounterclockwise /> </Button>
+            <Button variant="danger" onClick={props.onDelete} style={{ marginLeft: "5px" }}> <BsFillTrashFill /> </Button>
+          </Col>
+        </Row>
 
-        </Container>
-      </Card.Body>
-    </Card>
+      </Container>
+    </div>
   )
 }
 
@@ -139,32 +170,35 @@ function PageModify() {
   return (
     <div className="page-modify-wrapper">
       <Container fluid>
-        {siteList && siteList.map(site => {
-          return <UpdateCard
-            key={site._id.$oid}
-            name={site.name}
-            url={site.url}
-            interval={site.interval}
-            onUpdate={(o) => handleUpdate(site._id.$oid, o)}
-            onDelete={() => handleDelete(site._id.$oid)}
-          />
-        })}
+        <Card>
+            {siteList && siteList.map((site, index) => {
+              return <UpdateCard
+                key={site._id.$oid}
+                name={site.name}
+                url={site.url}
+                interval={site.interval}
+                onUpdate={(o) => handleUpdate(site._id.$oid, o)}
+                onDelete={() => handleDelete(site._id.$oid)}
+              />
+            })}
 
-        {isCreating ?
-          <UpdateCard
-            name=""
-            url=""
-            interval=""
-            onUpdate={(o) => handleAdd(o)}
-            onDelete={() => setIsCreating(!isCreating)}
-          /> : null
-        }
-
-        <Row>
-          <Col md="auto">
-            <Button className='add-site-button' variant="primary" onClick={handleNewItem}> <AiOutlinePlus /> </Button>
-          </Col>
-        </Row>
+            {isCreating ?
+              <UpdateCard
+                name=""
+                url=""
+                interval=""
+                onUpdate={(o) => handleAdd(o)}
+                onDelete={() => setIsCreating(!isCreating)}
+              /> : null
+            }
+          <Button
+            className='add-site-button'
+            variant="primary"
+            onClick={handleNewItem}
+            style={{ width: "42px", margin: "20px" }}>
+            <AiOutlinePlus />
+          </Button>
+        </Card>
       </Container>
     </div>
   );
