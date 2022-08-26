@@ -21,7 +21,11 @@ Note: This will mirror your local tool folder into the container, so changes wil
 ### Backend: 
 1. Create a new virtual environment and activate it
 ```
+Windows:
 python -m venv env && source env/Scripts/activate
+
+Mac/Linux
+python -m venv env && source env/bin/activate
 ```
 2. Export two variables in current terminal so the backend can connect to the DB.
 ```
