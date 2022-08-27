@@ -7,7 +7,7 @@ FROM alpine AS dev
 RUN apk add nodejs yarn
 
 WORKDIR /delay-frontend
-COPY package.json yarn.lock ./
+COPY package.json ./
 RUN yarn install
 
 CMD yarn start
