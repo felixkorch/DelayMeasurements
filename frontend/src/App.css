@@ -141,8 +141,7 @@ a {
 }
 
 .m-header {
-  margin: inherit;
-  padding: inherit;
+  margin-left: 10px;
 }
 
 .m-header>.m-title {

@@ -1,6 +1,4 @@
 // Bootstrap
-import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
 import Button from 'react-bootstrap/Button';
 import Card from 'react-bootstrap/Card';
 
@@ -43,24 +41,20 @@ function MeasurementsTable(props) {
 
 
   return (
-    <Card>
+    <Card style={{ height: "100%" }}>
       <div className='m-header'>
         <div className='m-title'>Measurements for {props.selected}</div>
         <div className='m-category'>{props.data.length} Data-points</div>
       </div>
       <Card.Body>
-        <div className={tableTheme} style={{ height: 600 }}>
+        <div className={tableTheme} style={{ height: "90%" }}>
           <AgGridReact
-
             rowData={props.data} // Row Data for Rows
             ref={gridRef}
             columnDefs={columnDefs} // Column Defs for Columns
             defaultColDef={defaultColDef} // Default Column Properties
-
             animateRows={true} // Optional - set to 'true' to have rows animate when sorted
             rowSelection='multiple' // Options - allows click selection of rows
-
-          //onCellClicked={cellClickedListener} // Optional - registering for Grid Event
           />
         </div>
         <Button
@@ -115,7 +109,7 @@ function PageMeasurements() {
         const res = response.data.map((e, key) => {
           return { ...e, id: key, date: new Date(e.date.$date) };
         });
-        setMeasurements(() => res);
+        setMeasurements(prev => res);
       })
       .catch(function (error) {
         console.log(error);
@@ -124,11 +118,7 @@ function PageMeasurements() {
 
   return (
     <div className='stats-wrapper'>
-      <Container fluid>
-        <Row>
-          <MeasurementsTable data={measurements} selected={selected} />
-        </Row>
-      </Container>
+      <MeasurementsTable data={measurements} selected={selected} />
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { useState, useEffect, useContext } from 'react';
 
 // Local
 import { Api } from '../Api.js'
-import { formatDate } from '../scripts/utilities.js';
+import { formatDate, useWindowDimensions } from '../scripts/utilities.js';
 import { ColorModeContext } from '../components/SideBar.js'
 
 const DARKMODE_FORE_COLOR = '#ffffffc7';
@@ -32,7 +32,7 @@ const MyDayPicker = (props) => {
       mode="single"
       selected={selected}
       onSelect={setSelected}
-      style={{color: styleColor}}
+      style={{ color: styleColor }}
       modifiersClassNames={{
         selected: 'my-selected',
         today: 'my-today'
@@ -57,7 +57,6 @@ const getOptions = (colorMode) => {
     chart: {
       type: 'area',
       stacked: false,
-      height: 500,
       foreColor: foreColor,
       zoom: {
         type: 'x',
@@ -120,6 +119,7 @@ function PageTimeSeries() {
   const [day, setDay] = useState(new Date());
   const [sites, setSites] = useState([]);
   const colorMode = useContext(ColorModeContext);
+  const { height, width } = useWindowDimensions();
 
   // Get the sites on mount
   useEffect(() => {
@@ -165,13 +165,13 @@ function PageTimeSeries() {
         <div style={{ display: "flex", flexFlow: "column nowrap", padding: "10px" }}>
           <div style={{ display: "flex", flexFlow: "row nowrap"}}>
             <ReactApexChart
-              style={{flex: 1}}
+              style={{ flex: 1 }}
+              height={ height / 2 }
               options={getOptions(colorMode)}
               series={getSeries(measurements)}
-              height="500px"
               type="area" />
           </div>
-          <div style={{ display: "flex", flexFlow: "row nowrap",  justifyContent: "center" }}>
+          <div style={{ display: "flex", flexFlow: "row nowrap", justifyContent: "center" }}>
             <MyDayPicker
               onSelect={d => setDay(d)} />
           </div>
