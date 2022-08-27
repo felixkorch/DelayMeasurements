@@ -7,7 +7,7 @@ services:
       target: ${STAGE}
     volumes:
       - "/delay-frontend/node_modules"
-      - "./frontend:/delay-frontend:delegated"
+      - "./frontend:/delay-frontend"
     environment:
       - ENV_USER=${DB_USER}
       - ENV_PASS=${DB_PASS}
@@ -23,7 +23,7 @@ services:
       target: ${STAGE}
     volumes:
       - "/delay-backend/env"
-      - "./backend:/delay-backend:delegated"
+      - "./backend:/delay-backend"
     environment:
       - ENV_USER=${DB_USER}
       - ENV_PASS=${DB_PASS}
