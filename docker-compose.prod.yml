@@ -4,10 +4,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: ${STAGE}
-    volumes:
-      - "/delay-frontend/node_modules"
-      - "./frontend:/delay-frontend:delegated"
+      target: prod
     environment:
       - ENV_USER=${DB_USER}
       - ENV_PASS=${DB_PASS}
@@ -20,10 +17,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: ${STAGE}
-    volumes:
-      - "/delay-backend/env"
-      - "./backend:/delay-backend:delegated"
+      target: prod
     environment:
       - ENV_USER=${DB_USER}
       - ENV_PASS=${DB_PASS}
@@ -47,15 +41,13 @@ services:
   delay-tool:
     build:
       context: ./tool
-      target: ${STAGE}
+      target: prod
       dockerfile: Dockerfile
       args:
         ARG_USER: ${DB_USER}
         ARG_PASS: ${DB_PASS}
         ARG_HOST: ${DB_HOST}
         ARG_DB: ${DB_TO_USE}
-    volumes:
-      - ./tool:/delay-tool
     ports:
       - "5011:5011"
     working_dir: /delay-tool

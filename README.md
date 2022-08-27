@@ -7,16 +7,17 @@ DB_USER=defaultUser
 DB_PASS=defaultPass
 DB_TO_USE=delay
 DB_HOST=delay-db
+STAGE=dev
 ```
-2. To set-up an environment for the C++ tool & a mongo-db run:
+2. To set-up a dev environment using docker-compose, run:
 ```
-docker-compose -f docker-compose.tool.yml up -d --build
+docker-compose up -d
 ```
 
-Note: This will mirror your local tool folder into the container, so changes will automatically be applied.
+Note: This will mirror your local folders into the container, so changes will automatically be applied.
 
 
-## Building the web-server
+## Building the web-server separately
 
 ### Backend: 
 1. Create a new virtual environment and activate it
