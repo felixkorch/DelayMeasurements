@@ -75,16 +75,18 @@ function PageMeasurements() {
   const [measurements, setMeasurements] = useState([]);
   const [selected, setSelected] = useState("");
   const [sites, setSites] = useState([]);
+  const [timer, setTimer] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
+      setTimer(prev => prev + 1);
       if (selected == "")
         return;
       getMeasurements();
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [timer]);
 
   useAfterFirstRender(() => {
     if (selected == "")
