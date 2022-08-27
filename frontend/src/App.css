@@ -108,6 +108,48 @@ a {
   background-color: #EFF3F6;
 }
 
+.site-modify-error {
+  color: red;
+  font-size: 0.875rem;
+  margin-top: 3px;
+}
+
+.m-header {
+  margin-left: 10px;
+}
+
+.m-header>.m-title {
+  margin-top: 10px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #000000c7;
+}
+
+.m-header>.m-category {
+  font-size: 15px;
+  font-weight: 600;
+  color: #00000094;
+}
+
+/* Overriding some properties for DayPicker */
+.my-selected:not([disabled]) {
+  font-weight: bold;
+  border: 2px solid currentColor;
+}
+
+.my-selected:hover:not([disabled]) {
+  border-color: black;
+  color: black;
+  background-color: transparent;
+}
+
+.rdp {
+  --rdp-background-color: transparent;
+  --rdp-outline: none;
+}
+
+
+/* Override for mobile screens */
 @media screen and (max-height: 450px) {
   .sidebar-wrapper {
     padding-top: 15px;
@@ -132,89 +174,16 @@ a {
     margin-left: 0px;
   }
 
-}
+  .stats-wrapper {
+    width: 100%;
+  }
+  
+  .time-wrapper {
+    width: 100%;
+  }
+  
+  .page-modify-wrapper {
+    width: 100%;
+  }
 
-.site-modify-error {
-  color: red;
-  font-size: 0.875rem;
-  margin-top: 3px;
-}
-
-.m-header {
-  margin-left: 10px;
-}
-
-.m-header>.m-title {
-  margin-top: 10px;
-  font-size: 20px;
-  font-weight: 600;
-  color: #000000c7;
-}
-
-.m-header>.m-category {
-  font-size: 15px;
-  font-weight: 600;
-  color: #00000094;
-}
-
-.table-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-direction: row;
-}
-
-.filter {
-  display: inline-block;
-  user-select: none;
-}
-
-.filter-content {
-  display: none;
-  position: absolute;
-  min-width: 160px;
-  overflow: auto;
-  z-index: 1;
-}
-
-.filter-body {
-  box-shadow: rgba(25, 25, 25, 0.04) 0 0 1px 0, rgba(0, 0, 0, 0.1) 0 3px 4px 0;
-}
-
-.active-filters {
-  display: flex;
-  margin-bottom: 10px;
-}
-
-.active-filter {
-  background-color: #CFD8DC;
-  color: black;
-  font-size: 15px;
-  margin: 5px;
-  padding: 5px 10px;
-  border-radius: 4px;
-}
-
-.filter-duration {
-  width: 150px;
-}
-
-.show {
-  display: block;
-}
-
-.my-selected:not([disabled]) {
-  font-weight: bold;
-  border: 2px solid currentColor;
-}
-
-.my-selected:hover:not([disabled]) {
-  border-color: black;
-  color: black;
-  background-color: transparent;
-}
-
-.rdp {
-  --rdp-background-color: transparent;
-  --rdp-outline: none;
 }
