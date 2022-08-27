@@ -189,3 +189,22 @@ a {
   }
 
 }
+
+/* Scale text for smaller screens */
+@media (max-width: 1500px) {
+  .sidebar-li .route-text {
+    font-size: 14px;
+  }
+
+  .m-header>.m-title {
+    font-size: 18px;
+  }
+
+  .m-header>.m-category {
+    font-size: 13px;
+  }
+
+  .sidebar-title {
+    font-size: 18px;
+  }
+}
