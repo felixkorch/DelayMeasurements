@@ -13,6 +13,10 @@ STAGE=dev
 ```
 docker-compose up -d
 ```
+3. To build reqserver run this command in the tool-container:
+```
+./build_server.sh
+```
 
 Note: This will mirror your local folders into the container, so changes will automatically be applied.
 
