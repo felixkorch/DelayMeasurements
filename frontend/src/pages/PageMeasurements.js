@@ -115,7 +115,7 @@ function PageMeasurements() {
         const res = response.data.map((e, key) => {
           return { ...e, id: key, date: new Date(e.date.$date) };
         });
-        setMeasurements(res);
+        setMeasurements(() => res);
       })
       .catch(function (error) {
         console.log(error);
