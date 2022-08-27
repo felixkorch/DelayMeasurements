@@ -47,23 +47,24 @@ function MeasurementsTable(props) {
         <div className='m-category'>{props.data.length} Data-points</div>
       </div>
       <Card.Body>
-        <div className={tableTheme} style={{ height: "90%" }}>
-          <AgGridReact
-            rowData={props.data} // Row Data for Rows
-            ref={gridRef}
-            columnDefs={columnDefs} // Column Defs for Columns
-            defaultColDef={defaultColDef} // Default Column Properties
-            animateRows={true} // Optional - set to 'true' to have rows animate when sorted
-            rowSelection='multiple' // Options - allows click selection of rows
-          />
+        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+          <div className={tableTheme} style={{ flex: "1" }}>
+            <AgGridReact
+              rowData={props.data} // Row Data for Rows
+              ref={gridRef}
+              columnDefs={columnDefs} // Column Defs for Columns
+              defaultColDef={defaultColDef} // Default Column Properties
+              animateRows={true} // Optional - set to 'true' to have rows animate when sorted
+              rowSelection='multiple' // Options - allows click selection of rows
+            />
+          </div>
+          <Button
+            variant="primary"
+            onClick={onBtnExport}
+            style={{ fontSize: "14px", float: "right", height: "35px", width: "200px", marginTop: "20px", marginLeft: "auto" }}>
+            Download CSV export file
+          </Button>
         </div>
-        <Button
-          variant="primary"
-          onClick={onBtnExport}
-          style={{ fontSize: "14px", float: "right", marginTop: "20px" }}>
-          Download CSV export file
-        </Button>
-
       </Card.Body>
     </Card>
   );

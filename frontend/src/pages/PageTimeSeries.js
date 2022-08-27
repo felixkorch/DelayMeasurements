@@ -161,8 +161,8 @@ function PageTimeSeries() {
 
   return (
     <div className='time-wrapper'>
-      <Card>
-        <div style={{ display: "flex", flexFlow: "column nowrap", padding: "10px" }}>
+      <Card style={{ height: "100%" }}>
+        <div style={{ height: "100%", display: "flex", flexFlow: "column nowrap", justifyContent: "space-between", padding: "10px" }}>
           <div style={{ display: "flex", flexFlow: "row nowrap"}}>
             <ReactApexChart
               style={{ flex: 1 }}
