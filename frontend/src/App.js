@@ -1,13 +1,15 @@
-import React from "react";
+// React
+import { React, useState, createContext } from 'react';
+import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
+
+// Local
 import './App.css';
-import './Dark.css'
+import './dark.css'
 import PageMeasurements from './pages/PageMeasurements.js'
 import PageModify from './pages/PageModify.js'
 import PageTimeSeries from './pages/PageTimeSeries'
-
 import SideBar from './components/SideBar.js'
-import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
-import { useState, createContext } from 'react';
+
 
 export const AppContext = createContext({
   colorMode: "dark",
