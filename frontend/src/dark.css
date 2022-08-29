@@ -35,6 +35,10 @@
     color: #ffffffc7;
 }
 
+.App.dark .title-select-click {
+    color: #ffffffc7;
+}
+
 .App.dark .m-header>.m-category {
     color: #ffffff94;
 }
@@ -57,4 +61,9 @@
 .App.dark .rdp {
     --rdp-background-color: transparent;
     --rdp-outline: none;
+}
+
+.App.dark .title-select-li {
+    background-color: #11111195;
+    color: #ffffffc7;
 }

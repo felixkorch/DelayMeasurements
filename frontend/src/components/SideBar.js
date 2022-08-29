@@ -5,8 +5,11 @@ import Button from 'react-bootstrap/Button';
 import { NavLink } from "react-router-dom";
 import { createContext, useContext } from "react";
 
+// Local
+import { AppContext } from '../App.js';
+
 // Icons
-import { BsFileEarmarkPlus, BsBarChart, BsCloudArrowDown, BsClipboardData } from "react-icons/bs";
+import { BsFileEarmarkPlus, BsClipboardData } from "react-icons/bs";
 import { TbTimeline } from 'react-icons/tb'
 import { MdLightMode, MdDarkMode } from 'react-icons/md'
 
@@ -16,14 +19,9 @@ const routes = [
   { "path": "/modify", "name": "Modify", "icon": <BsFileEarmarkPlus className="side-icon" /> }
 ]
 
-export const ColorModeContext = createContext(undefined);
-
-// Hook to provide access to context object
-export const UseColorModeContext = () => {
-  return useContext(ColorModeContext);
-};
-
 function SideBar(props) {
+
+  const ctx = useContext(AppContext);
 
   return (
     <div className="sidebar-wrapper">
@@ -45,14 +43,14 @@ function SideBar(props) {
       </div>
       <div className='sidebar-colormode'>
         <Button
-          onClick={() => props.setColorMode("light")}
+          onClick={() => ctx.setColorMode("light")}
           size="sm"
           variant="light"
           style={{ marginRight: '10px' }}>
           <MdLightMode />
         </Button>
         <Button
-          onClick={() => props.setColorMode("dark")}
+          onClick={() => ctx.setColorMode("dark")}
           size="sm"
           variant="dark">
           <MdDarkMode />

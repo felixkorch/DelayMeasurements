@@ -108,6 +108,7 @@ a {
   padding: 20px;
   flex: 5;
   background-color: #EFF3F6;
+  overflow: auto;
 }
 
 .site-modify-error {
@@ -207,4 +208,32 @@ a {
   .sidebar-title {
     font-size: 18px;
   }
+}
+
+
+.title-select {
+  display: inline-block;
+}
+
+.title-select-dropdown {
+  display: none;
+  position: absolute;
+  min-width: 160px;
+  overflow: auto;
+  z-index: 1;
+}
+
+.title-select-click {
+  cursor: pointer;
+  font-weight: 600;
+  color: #000000c7;
+  user-select: none;
+}
+
+.title-select-li {
+  font-size: 15px;
+}
+
+.show {
+  display: block;
 }

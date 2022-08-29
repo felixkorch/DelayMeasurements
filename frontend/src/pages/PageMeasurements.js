@@ -8,18 +8,19 @@ import { useAfterFirstRender } from '../scripts/utilities.js';
 
 // Local
 import { Api } from '../Api.js'
-import { ColorModeContext } from '../components/SideBar.js';
+import { AppContext } from '../App.js';
 
 // Libs
 import { AgGridReact } from 'ag-grid-react'; // the AG Grid React Component
 import 'ag-grid-community/styles/ag-grid.css'; // Core grid CSS, always needed
 import 'ag-grid-community/styles/ag-theme-alpine.css'; // Optional theme CSS
+import TitleSelect from '../components/TitleSelect.js';
 
 function MeasurementsTable(props) {
 
   const gridRef = useRef();
-  const colorMode = useContext(ColorModeContext);
-  const tableTheme = colorMode == 'dark' ? 'ag-theme-alpine-dark' : 'ag-theme-alpine';
+  const ctx = useContext(AppContext);
+  const tableTheme = ctx.colorMode == 'dark' ? 'ag-theme-alpine-dark' : 'ag-theme-alpine';
 
   const onBtnExport = useCallback(() => {
     gridRef.current.api.exportDataAsCsv();
@@ -39,16 +40,15 @@ function MeasurementsTable(props) {
     flex: 1,
   }));
 
-
   return (
-    <Card style={{ height: "100%" }}>
+    <Card>
       <div className='m-header'>
-        <div className='m-title'>Measurements for {props.selected}</div>
+        <div className='m-title'>Measurements for <TitleSelect /></div>
         <div className='m-category'>{props.data.length} Data-points</div>
       </div>
       <Card.Body>
-        <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-          <div className={tableTheme} style={{ flex: "1" }}>
+        <div style={{ display: "flex", flexDirection: "column", height: "700px" }}>
+          <div className={tableTheme} style={{ flex: "1"}}>
             <AgGridReact
               rowData={props.data} // Row Data for Rows
               ref={gridRef}
@@ -71,43 +71,33 @@ function MeasurementsTable(props) {
 }
 
 function PageMeasurements() {
-
+  const ctx = useContext(AppContext);
   const [measurements, setMeasurements] = useState([]);
-  const [selected, setSelected] = useState("");
-  const [sites, setSites] = useState([]);
   const [timer, setTimer] = useState(0);
 
+  // Get measurements every second
+  /* TODO
   useEffect(() => {
     const interval = setInterval(async () => {
       setTimer(prev => prev + 1);
-      if (selected == "")
+      if (ctx.selectedSite == "")
         return;
       getMeasurements();
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timer]);
+  }, [timer]); */
 
-  useAfterFirstRender(() => {
-    if (selected == "")
-      return;
-    getMeasurements();
-  }, [selected]);
-
-  // Get the sites on mount
+  // Get measurements when selected site changes
   useEffect(() => {
-    Api.get('sites')
-      .then((response) => {
-        const len = response.data.length;
-        setSites(response.data);
-        setSelected(len ? response.data[0].name : "");
-      }).catch((error) => {
-        console.log(error);
-      })
-  }, []);
+    getMeasurements();
+  }, [ctx.selectedSite]);
 
   function getMeasurements() {
-    Api.get('measurements', { params: { name: selected, limit: 1000 } })
+    if (ctx.selectedSite == "")
+      return;
+
+    Api.get('measurements', { params: { name: ctx.selectedSite, limit: 1000 } })
       .then(function (response) {
         const res = response.data.map((e, key) => {
           return { ...e, id: key, date: new Date(e.date.$date) };
@@ -121,7 +111,7 @@ function PageMeasurements() {
 
   return (
     <div className='stats-wrapper'>
-      <MeasurementsTable data={measurements} selected={selected} />
+      <MeasurementsTable data={measurements} />
     </div>
   );
 }

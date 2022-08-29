@@ -7,20 +7,21 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
 // React
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useMemo } from 'react';
 
 // Local
 import { Api } from '../Api.js'
 import { formatDate, useWindowDimensions } from '../scripts/utilities.js';
-import { ColorModeContext } from '../components/SideBar.js'
+import { AppContext } from '../App.js'
+import TitleSelect from '../components/TitleSelect.js';
 
 const DARKMODE_FORE_COLOR = '#ffffffc7';
 const LIGHTMODE_FORE_COLOR = '#000000';
 
 const MyDayPicker = (props) => {
   const [selected, setSelected] = useState(new Date());
-  const colorMode = useContext(ColorModeContext);
-  const styleColor = colorMode == 'dark' ? DARKMODE_FORE_COLOR : LIGHTMODE_FORE_COLOR;
+  const ctx = useContext(AppContext);
+  const styleColor = ctx.colorMode == 'dark' ? DARKMODE_FORE_COLOR : LIGHTMODE_FORE_COLOR;
 
   // Calls parent when selected changes
   useEffect(() => {
@@ -73,10 +74,6 @@ const getOptions = (colorMode) => {
     markers: {
       size: 0,
     },
-    title: {
-      text: 'Delay over time',
-      align: 'left'
-    },
     fill: {
       type: 'gradient',
       gradient: {
@@ -113,38 +110,36 @@ const getOptions = (colorMode) => {
 };
 
 function PageTimeSeries() {
-
-  const [measurements, setMeasurements] = useState([]);
-  const [selected, setSelected] = useState("");
-  const [day, setDay] = useState(new Date());
+  const ctx = useContext(AppContext);
   const [sites, setSites] = useState([]);
-  const colorMode = useContext(ColorModeContext);
+  const [measurements, setMeasurements] = useState([]);
+  const [day, setDay] = useState(new Date());
   const { height, width } = useWindowDimensions();
 
   // Get the sites on mount
   useEffect(() => {
     Api.get('sites')
       .then((response) => {
-        const len = response.data.length;
         setSites(response.data);
-        setSelected(len ? response.data[0].name : "");
+        if (ctx.selectedSite == "")
+          ctx.setSelectedSite(response.data[0].name);
       }).catch((error) => {
         console.log(error);
       })
   }, []);
 
   useEffect(() => {
-    if (selected == "")
-      return;
     getMeasurements();
-  }, [day, selected]);
+  }, [day, ctx.selectedSite]);
 
   function getMeasurements() {
+    if (ctx.selectedSite == "")
+      return;
     const nextDay = new Date(day);
     nextDay.setDate(nextDay.getDate() + 1);
     Api.get('measurements/date', {
       params: {
-        name: selected,
+        name: ctx.selectedSite,
         date: { begin: formatDate(day), end: formatDate(nextDay) }
       }
     })
@@ -159,15 +154,26 @@ function PageTimeSeries() {
       });
   }
 
+  function computeNotSelected(selected) {
+    return sites.filter(site => site.name != selected);
+  }
+  const notSelected = useMemo(
+    () => computeNotSelected(ctx.selectedSite), [ctx.selectedSite, sites]
+  );
+
   return (
     <div className='time-wrapper'>
-      <Card style={{ height: "100%" }}>
+      <Card>
+        <div className='m-header'>
+          <div className='m-title'>Time Series for <TitleSelect options={notSelected} /></div>
+          <div className='m-category'>{measurements.length} Data-points</div>
+        </div>
         <div style={{ height: "100%", display: "flex", flexFlow: "column nowrap", justifyContent: "space-between", padding: "10px" }}>
-          <div style={{ display: "flex", flexFlow: "row nowrap"}}>
+          <div style={{ display: "flex", flexFlow: "row nowrap" }}>
             <ReactApexChart
               style={{ flex: 1 }}
-              height={ height / 2 }
-              options={getOptions(colorMode)}
+              height={height / 2}
+              options={getOptions(ctx.colorMode)}
               series={getSeries(measurements)}
               type="area" />
           </div>

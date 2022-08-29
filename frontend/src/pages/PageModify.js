@@ -3,7 +3,7 @@ import { useEffect, useState, useContext } from 'react';
 
 // Local
 import { Api } from '../Api.js'
-import { ColorModeContext } from '../components/SideBar.js';
+import { AppContext } from '../App.js';
 
 // Bootstrap
 import Col from 'react-bootstrap/Col';
@@ -12,6 +12,7 @@ import Row from 'react-bootstrap/Row';
 import Container from 'react-bootstrap/Container';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
+import Alert from 'react-bootstrap/Alert';
 
 // Icons
 import { BsArrowCounterclockwise, BsFillTrashFill, BsPlus } from "react-icons/bs";
@@ -26,8 +27,8 @@ const LIGHTMODE_INPUT_CLASSES = '';
 
 function UpdateCard(props) {
 
-  const colorMode = useContext(ColorModeContext);
-  const inputStyleClasses = colorMode == 'dark' ? DARKMODE_INPUT_CLASSES : LIGHTMODE_INPUT_CLASSES;
+  const ctx = useContext(AppContext);
+  const inputStyleClasses = ctx.colorMode == 'dark' ? DARKMODE_INPUT_CLASSES : LIGHTMODE_INPUT_CLASSES;
 
   const UpdateSchema = Yup.object().shape({
     name: Yup.string()
@@ -58,7 +59,7 @@ function UpdateCard(props) {
   }
 
   return (
-    <div style={{ padding: "10px" }}>
+    <div style={{ width: "100%" }}>
       <Container fluid>
         <Row>
           <Col md={12} lg={3} >
@@ -91,13 +92,14 @@ function UpdateCard(props) {
               onChange={changeHandler} />
             <div className="site-modify-error">{formik.errors.interval}</div>
           </Col>
-          <Col md={12} lg={3}>
-            <Button variant="primary" onClick={formik.handleSubmit} > <BsArrowCounterclockwise /> </Button>
-            <Button variant="danger" onClick={props.onDelete} style={{ marginLeft: "5px" }}> <BsFillTrashFill /> </Button>
+          <Col md={12} lg={2} className='d-flex justify-content-center'>
+            <Button variant="primary" onClick={formik.handleSubmit} style={{ height: "41px" }}> <BsArrowCounterclockwise /> </Button>
+            <Button variant="danger" onClick={props.onDelete} style={{ marginLeft: "5px", height: "41px" }}> <BsFillTrashFill /> </Button>
           </Col>
         </Row>
 
       </Container>
+      <hr></hr>
     </div>
   )
 }
@@ -106,6 +108,8 @@ function PageModify() {
 
   const [siteList, setSiteList] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertContent, setAlertContent] = useState("Success!");
 
   // Get the sites on mount
   useEffect(() => {
@@ -155,23 +159,38 @@ function PageModify() {
   }
 
   function handleAdd(newObj) {
-    setIsCreating(false);
     Api.post('sites', newObj)
-      .then(function (response) {
+      .then(async function (response) {
         const id = response.data.id
         const newState = [...siteList, { _id: id, ...newObj }];
-        setSiteList(newState);
+        await setSiteList(newState);
+        setIsCreating(false);
+        setShowAlert(true);
+        setAlertContent(<div>Now monitoring <b>{newObj.name}</b>!</div>);
       })
       .catch(function (error) {
         console.log(error);
       });
   }
 
+  // Set timeout for alert when:
+  // showAlert false -> true
+  useEffect(() => {
+    if (showAlert == false)
+      return;
+    const doCloseAlert = setTimeout(() => setShowAlert(false), 5000);
+    return () => clearTimeout(doCloseAlert);
+  }, [showAlert])
+
+
   return (
     <div className="page-modify-wrapper">
       <Container fluid>
-        <Card>
-            {siteList && siteList.map((site, index) => {
+        <Alert variant="success" dismissible transition show={showAlert} onClose={() => setShowAlert(false)}>
+          {alertContent}
+        </Alert>
+        <Card style={{ alignItems: "center", padding: "15px 10px" }}>
+            {siteList && siteList.map(site => {
               return <UpdateCard
                 key={site._id.$oid}
                 name={site.name}
@@ -192,10 +211,10 @@ function PageModify() {
               /> : null
             }
           <Button
-            className='add-site-button'
+            className='add-site-button rounded-circle'
             variant="primary"
             onClick={handleNewItem}
-            style={{ width: "42px", margin: "20px" }}>
+            style={{ marginRight: "auto" }}>
             <AiOutlinePlus />
           </Button>
         </Card>

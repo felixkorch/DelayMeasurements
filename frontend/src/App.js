@@ -6,20 +6,30 @@ import PageModify from './pages/PageModify.js'
 import PageTimeSeries from './pages/PageTimeSeries'
 
 import SideBar from './components/SideBar.js'
-import { ColorModeContext } from "./components/SideBar.js";
 import { Route, Routes, BrowserRouter, Navigate } from "react-router-dom";
-import { useState } from 'react';
+import { useState, createContext } from 'react';
+
+export const AppContext = createContext({
+  colorMode: "dark",
+  selectedSite: "",
+  setColorMode: () => {},
+  setSelectedSite: () => {}
+});
+
 
 function App() {
 
   const [colorMode, setColorMode] = useState("dark");
+  const [selectedSite, setSelectedSite] = useState("");
+  const value = { colorMode, selectedSite, setColorMode, setSelectedSite };
+
   const appClassName = colorMode == 'dark' ? 'App dark' : 'App';
 
   return (
-    <ColorModeContext.Provider value={colorMode}>
+    <AppContext.Provider value={value}>
       <div className={appClassName}>
         <BrowserRouter>
-          <SideBar setColorMode={(color) => setColorMode(color) } />
+          <SideBar />
           <div className="main">
             <Routes>
               <Route path="/" element={<Navigate to="/measurements" />} />
@@ -30,7 +40,7 @@ function App() {
           </div>
         </BrowserRouter>
       </div>
-    </ColorModeContext.Provider>
+    </AppContext.Provider>
   );
 }
 
